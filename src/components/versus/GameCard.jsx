@@ -35,8 +35,6 @@ const SPORT_EMOJIS = {
 export default function GameCard({ game, index, onJoin }) {
   const handleJoinGame = async () => {
     if (game.current_players >= game.max_players) return;
-    
-    // In a real app, this would update the game and add the user
     console.log("Joining game:", game.id);
     onJoin();
   };
@@ -48,128 +46,116 @@ export default function GameCard({ game, index, onJoin }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
+      transition={{ delay: index * 0.05 }}
       className="group"
     >
-      <Card className="h-full bg-white hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 shadow-md overflow-hidden">
-        <CardHeader className="p-0">
-          {/* Header with sport and status */}
-          <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-4">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{SPORT_EMOJIS[game.sport]}</span>
-                <Badge className={`${SPORT_COLORS[game.sport]} border-0`}>
-                  {game.sport.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </Badge>
-              </div>
-              <Badge 
-                variant={isGameFull ? "destructive" : "secondary"}
-                className={isGameFull ? "" : "bg-green-100 text-green-800"}
+      <Card className="h-full bg-slate-900/50 backdrop-blur-xl border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-xl hover:shadow-[0_20px_50px_-12px_rgba(59,130,246,0.3)] overflow-hidden group">
+        <CardContent className="p-0">
+          {/* Header Image/Gradient Area */}
+          <div className="relative h-48 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-900/40 group-hover:scale-110 transition-transform duration-700" />
+
+            {/* Status Badge */}
+            <div className="absolute top-4 right-4 z-10">
+              <Badge
+                className={`${isGameFull
+                    ? "bg-rose-500/20 text-rose-300 border-rose-500/20"
+                    : "bg-emerald-500/20 text-emerald-300 border-emerald-500/20"
+                  } backdrop-blur-md px-3 py-1 font-bold uppercase tracking-wider text-[10px]`}
               >
-                {isGameFull ? "FULL" : "OPEN"}
+                {isGameFull ? "Full" : "Open"}
               </Badge>
             </div>
-            
-            <h3 className="text-lg font-bold mb-2 group-hover:text-yellow-300 transition-colors">
-              {game.title}
-            </h3>
-            
-            <div className="flex items-center gap-4 text-sm text-slate-300">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                {format(new Date(game.date_time), "MMM d, h:mm a")}
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                {game.duration_minutes}min
-              </div>
-            </div>
-          </div>
-        </CardHeader>
 
-        <CardContent className="p-4 space-y-4">
-          {/* Location */}
-          <div className="flex items-start gap-2">
-            <MapPin className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-            <div className="text-sm">
-              <div className="font-medium text-slate-900">{game.location.venue_name}</div>
-              <div className="text-slate-600">{game.location.city}, {game.location.state}</div>
-            </div>
-          </div>
-
-          {/* Players */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm font-medium">
-                {game.current_players}/{game.max_players} players
+            {/* Sport Icon Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-20 group-hover:opacity-30 transition-opacity">
+              <span className="text-8xl transform -rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                {SPORT_EMOJIS[game.sport] || "🏆"}
               </span>
             </div>
-            <div className="text-xs text-slate-600">
-              {spotsLeft > 0 && `${spotsLeft} spots left`}
-            </div>
-          </div>
 
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                isGameFull ? 'bg-red-500' : 'bg-emerald-500'
-              }`}
-              style={{ width: `${(game.current_players / game.max_players) * 100}%` }}
-            />
-          </div>
-
-          {/* Skills and Cost */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-blue-600" />
-              <Badge variant="outline" className="text-xs">
-                {game.skill_level.replace(/_/g, ' ')}
-              </Badge>
-            </div>
+            {/* Price Tag */}
             {game.cost_per_person > 0 && (
-              <div className="flex items-center gap-1 text-sm font-medium text-slate-900">
-                <DollarSign className="w-4 h-4 text-green-600" />
-                ${game.cost_per_person}
+              <div className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 shadow-lg">
+                <span className="text-sm font-black text-white">${game.cost_per_person}</span>
+                <span className="text-[10px] text-slate-400 font-bold ml-1 uppercase">/ Session</span>
               </div>
             )}
           </div>
 
-          {/* Description */}
-          {game.description && (
-            <p className="text-sm text-slate-600 line-clamp-2">
-              {game.description}
-            </p>
-          )}
+          <div className="p-6">
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="border-blue-500/30 text-blue-400 bg-blue-500/5 text-[10px] font-black uppercase tracking-widest px-2 py-0.5">
+                  {game.sport?.replace(/_/g, ' ')}
+                </Badge>
+                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                  <Award className="w-3 h-3 text-yellow-500" />
+                  {game.skill_level?.replace(/_/g, ' ')}
+                </div>
+              </div>
+              <h3 className="text-xl font-black text-white tracking-tight group-hover:text-blue-400 transition-colors">
+                {game.title}
+              </h3>
+            </div>
 
-          {/* Organizer */}
-          <div className="text-xs text-slate-500 border-t pt-3">
-            Organized by {game.organizer_name || "Anonymous"}
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center gap-3 text-slate-400">
+                <div className="p-2 bg-white/5 rounded-lg">
+                  <Calendar className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className="text-sm font-bold tracking-tight">
+                  {format(new Date(game.date_time), "MMM d, h:mm a")}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-slate-400">
+                <div className="p-2 bg-white/5 rounded-lg">
+                  <MapPin className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className="text-sm font-bold tracking-tight truncate">
+                  {game.location.venue_name}, {game.location.city}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-emerald-400" />
+                  <span className="text-sm font-black text-white">
+                    {game.current_players}/{game.max_players}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">
+                    Joined
+                  </span>
+                </div>
+                {spotsLeft > 0 && !isGameFull && (
+                  <span className="text-[10px] font-black text-emerald-400 uppercase bg-emerald-400/10 px-2 py-0.5 rounded-md">
+                    {spotsLeft} Left
+                  </span>
+                )}
+              </div>
+
+              {/* Modern Progress Line */}
+              <div className="relative w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(game.current_players / game.max_players) * 100}%` }}
+                  className={`absolute left-0 top-0 h-full rounded-full ${isGameFull ? 'bg-rose-500' : 'bg-blue-500'}`}
+                />
+              </div>
+            </div>
+
+            <Button
+              onClick={handleJoinGame}
+              disabled={isGameFull}
+              className={`w-full h-12 rounded-xl font-black uppercase tracking-[0.1em] transition-all ${isGameFull
+                  ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 active:scale-[0.98]'
+                }`}
+            >
+              {isGameFull ? "Game Full" : "Join Matchup"}
+            </Button>
           </div>
-
-          {/* Action Button */}
-          <Button
-            onClick={handleJoinGame}
-            disabled={isGameFull}
-            className={`w-full font-medium ${
-              isGameFull 
-                ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-            }`}
-          >
-            {isGameFull ? (
-              <>
-                <Users className="w-4 h-4 mr-2" />
-                Game Full
-              </>
-            ) : (
-              <>
-                <Zap className="w-4 h-4 mr-2" />
-                Join Game
-              </>
-            )}
-          </Button>
         </CardContent>
       </Card>
     </motion.div>

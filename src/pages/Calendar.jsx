@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { PickupGame, GameParticipation } from "@/api/entities";
-import { Calendar as CalendarIcon, Clock, MapPin, Users, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, Users, Zap, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,32 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSa
 
 import GameDetailDialog from "../components/calendar/GameDetailDialog";
 import UpcomingGames from "../components/calendar/UpcomingGames";
+import { createPageUrl } from "@/utils";
+import { Link } from "react-router-dom";
+import { X } from "lucide-react";
+
+const navigationItems = [
+  {
+    title: "Find Professionals",
+    url: createPageUrl("Browse"),
+    icon: Users,
+  },
+  {
+    title: "FitFindr Versus",
+    url: createPageUrl("Versus"),
+    icon: Zap,
+  },
+  {
+    title: "My Calendar",
+    url: createPageUrl("Calendar"),
+    icon: CalendarIcon,
+  },
+  {
+    title: "FitFindr AI",
+    url: createPageUrl("FitFindr AI"),
+    icon: Sparkles,
+  },
+];
 
 const SPORT_EMOJIS = {
   basketball: "🏀",
@@ -60,13 +86,13 @@ export default function Calendar() {
   const calendarEnd = endOfWeek(monthEnd);
 
   const getGamesForDate = (date) => {
-    return allGames.filter(game => 
+    return allGames.filter(game =>
       isSameDay(new Date(game.date_time), date)
     );
   };
 
   const getMyGamesForDate = (date) => {
-    return myGames.filter(game => 
+    return myGames.filter(game =>
       isSameDay(new Date(game.date_time), date)
     );
   };
@@ -85,65 +111,42 @@ export default function Calendar() {
       days.push(
         <motion.div
           key={currentDay.toISOString()}
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`min-h-[100px] p-2 border border-slate-100 cursor-pointer transition-all duration-200 ${
-            isCurrentMonth ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/50'
-          } ${isDayToday ? 'ring-2 ring-emerald-400' : ''}`}
+          className={`min-h-[140px] p-4 border border-white/5 cursor-pointer transition-all duration-300 relative group overflow-hidden ${isCurrentMonth ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-900/30 opacity-40 hover:opacity-100'
+            } ${isDayToday ? 'ring-2 ring-blue-500/50 bg-blue-500/5' : ''}`}
           onClick={() => setSelectedDate(currentDay)}
         >
-          <div className={`text-sm font-medium mb-1 ${
-            isCurrentMonth ? 'text-slate-900' : 'text-slate-400'
-          } ${isDayToday ? 'text-emerald-600 font-bold' : ''}`}>
+          <div className={`text-sm font-black mb-3 ${isCurrentMonth ? 'text-white' : 'text-slate-500'
+            } ${isDayToday ? 'text-blue-400' : ''}`}>
             {format(currentDay, 'd')}
           </div>
-          
-          {/* My Games (highlighted) */}
-          {myGamesOnDay.map((game, index) => (
-            <div
-              key={game.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedGame(game);
-              }}
-              className="mb-1 p-1 bg-emerald-100 border border-emerald-200 rounded text-xs text-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-1">
-                <span>{SPORT_EMOJIS[game.sport]}</span>
-                <span className="truncate font-medium">My Game</span>
-              </div>
-              <div className="text-emerald-600">
-                {format(new Date(game.date_time), 'h:mm a')}
-              </div>
-            </div>
-          ))}
 
-          {/* Other Available Games */}
-          {gamesOnDay.filter(game => !myGamesOnDay.includes(game)).slice(0, 2).map((game, index) => (
-            <div
-              key={game.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedGame(game);
-              }}
-              className="mb-1 p-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800 hover:bg-blue-100 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-1">
-                <span>{SPORT_EMOJIS[game.sport]}</span>
+          <div className="space-y-1.5 relative z-10">
+            {myGamesOnDay.map((game) => (
+              <div
+                key={game.id}
+                className="text-[9px] font-black uppercase tracking-tight py-1 px-2 rounded-lg border bg-blue-600/20 border-blue-500/30 text-blue-300 flex items-center gap-1.5 transition-all"
+              >
+                <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
+                <span className="truncate">My Game</span>
+              </div>
+            ))}
+            {gamesOnDay.filter(game => !myGamesOnDay.some(mg => mg.id === game.id)).slice(0, 2).map((game) => (
+              <div
+                key={game.id}
+                className="text-[9px] font-black uppercase tracking-tight py-1 px-2 rounded-lg border bg-white/5 border-white/10 text-slate-400 group-hover:text-slate-300 flex items-center gap-1.5 transition-all"
+              >
+                <div className="w-1 h-1 rounded-full bg-slate-600" />
                 <span className="truncate">{game.title}</span>
               </div>
-              <div className="text-blue-600">
-                {format(new Date(game.date_time), 'h:mm a')}
+            ))}
+            {gamesOnDay.length > (myGamesOnDay.length + 2) && (
+              <div className="text-[9px] font-black text-slate-500 pl-2 uppercase tracking-widest mt-1">
+                + {gamesOnDay.length - myGamesOnDay.length - 2} More
               </div>
-            </div>
-          ))}
-
-          {/* Show count if more games */}
-          {gamesOnDay.length > (myGamesOnDay.length + 2) && (
-            <div className="text-xs text-slate-500 mt-1">
-              +{gamesOnDay.length - myGamesOnDay.length - 2} more
-            </div>
-          )}
+            )}
+          </div>
         </motion.div>
       );
 
@@ -154,132 +157,210 @@ export default function Calendar() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
-      {/* Header */}
-      <section className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center"
+    <div className="min-h-screen bg-slate-950 text-white selection:bg-blue-500/30">
+      {/* Sticky Top Header */}
+      <header className="sticky top-0 z-[200] w-full bg-slate-900/50 backdrop-blur-xl border-b border-white/10 px-8 h-20 flex items-center justify-between">
+        <Link to={createPageUrl("Browse")} className="flex items-center gap-3 group">
+          <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-105" />
+          <div className="hidden sm:block">
+            <h1 className="text-xl font-black text-white tracking-tight">FitFindr</h1>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest -mt-1">My Schedule</p>
+          </div>
+        </Link>
+
+        <nav className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10">
+          {navigationItems.map((item) => {
+            const isActive = item.url.includes("Calendar");
+            return (
+              <Link key={item.title} to={item.url}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-11 px-6 rounded-xl flex items-center gap-2 transition-all duration-300 ${isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                >
+                  <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                  <span className="text-sm font-bold">{item.title}</span>
+                </Button>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            className="h-11 px-6 rounded-xl bg-white/5 border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/10"
           >
-            <h1 className="text-4xl font-bold mb-4 flex items-center justify-center gap-3">
-              <CalendarIcon className="w-8 h-8" />
-              My Fitness Calendar
-            </h1>
-            <p className="text-xl text-emerald-100">
-              Track your games, appointments, and fitness schedule
-            </p>
-          </motion.div>
+            Settings
+          </Button>
         </div>
-      </section>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Calendar */}
-          <div className="lg:col-span-3">
-            <Card className="shadow-lg border-0">
-              <CardHeader className="border-b bg-slate-50">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-bold text-slate-900">
-                    {format(currentDate, 'MMMM yyyy')}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentDate(new Date())}
-                      size="sm"
-                    >
-                      Today
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="p-0">
-                {/* Calendar Header */}
-                <div className="grid grid-cols-7 border-b">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                    <div key={day} className="p-3 text-center text-sm font-medium text-slate-600 bg-slate-50">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7">
-                  {isLoading ? (
-                    // Loading skeleton
-                    Array.from({ length: 42 }).map((_, i) => (
-                      <div key={i} className="min-h-[100px] p-2 border border-slate-100 bg-slate-50 animate-pulse" />
-                    ))
-                  ) : (
-                    renderCalendarDays()
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Legend */}
-            <div className="mt-4 flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-emerald-100 border border-emerald-200 rounded"></div>
-                <span className="text-slate-600">My Scheduled Games</span>
+      <main className="max-w-7xl mx-auto px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          {/* Main Calendar Card */}
+          <div className="lg:col-span-2 space-y-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-4xl font-black text-white tracking-tight mb-2">My Matchups</h2>
+                <p className="text-slate-400 font-medium capitalize">{format(currentDate, 'MMMM yyyy')}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-50 border border-blue-200 rounded"></div>
-                <span className="text-slate-600">Available Games</span>
+              <div className="flex items-center gap-3 bg-white/5 p-1.5 rounded-2xl border border-white/10">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+                  className="rounded-xl hover:bg-white/5 text-slate-400 hover:text-white"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentDate(new Date())}
+                  className="font-black uppercase tracking-widest text-[10px] text-slate-400 hover:text-white"
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+                  className="rounded-xl hover:bg-white/5 text-slate-400 hover:text-white"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/50 backdrop-blur-xl rounded-[3rem] border border-white/10 overflow-hidden shadow-2xl">
+              <div className="grid grid-cols-7 border-b border-white/5 bg-white/5">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="py-6 text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 glass-scrollbar overflow-y-auto max-h-[700px]">
+                {isLoading ? (
+                  Array.from({ length: 35 }).map((_, i) => (
+                    <div key={i} className="min-h-[140px] p-4 border border-white/5 bg-white/5 animate-pulse" />
+                  ))
+                ) : (
+                  renderCalendarDays()
+                )}
               </div>
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            <UpcomingGames games={myGames} onGameSelect={setSelectedGame} />
-            
-            {/* Quick Stats */}
-            <Card className="shadow-md border-0">
-              <CardHeader>
-                <CardTitle className="text-lg text-slate-900">This Month</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Games Scheduled</span>
-                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
-                    {myGames.filter(game => 
-                      isSameMonth(new Date(game.date_time), currentDate)
-                    ).length}
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Available Games</span>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    {allGames.filter(game => 
-                      isSameMonth(new Date(game.date_time), currentDate)
-                    ).length}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="space-y-8">
+            <UpcomingGames
+              games={myGames}
+              onGameSelect={(game) => setSelectedGame(game)}
+            />
+
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-900/20 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+              <div className="relative z-10">
+                <h3 className="text-2xl font-black tracking-tight mb-4 leading-tight">Host Your Own Matchup</h3>
+                <p className="text-blue-100 text-sm font-medium mb-8 leading-relaxed opacity-80">Can't find a game? Create yours and let players join you.</p>
+                <Link to={createPageUrl("Versus")}>
+                  <Button className="w-full h-14 bg-white text-blue-600 hover:bg-blue-50 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-blue-950/20">
+                    Create a Game
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* Game Detail Dialog */}
+      {/* Selected Day Dialog */}
+      <AnimatePresence>
+        {selectedDate && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-8">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedDate(null)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl"
+            >
+              <div className="p-10">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h3 className="text-3xl font-black text-white tracking-tight leading-none mb-1">
+                      {format(selectedDate, 'EEEE')}
+                    </h3>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">
+                      {format(selectedDate, 'MMMM d, yyyy')}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSelectedDate(null)}
+                    className="rounded-2xl hover:bg-white/5 text-slate-500"
+                  >
+                    <X className="w-6 h-6" />
+                  </Button>
+                </div>
+
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4 glass-scrollbar">
+                  {getGamesForDate(selectedDate).length === 0 ? (
+                    <div className="py-12 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
+                      <CalendarIcon className="w-10 h-10 text-slate-700 mx-auto mb-4" />
+                      <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">No matches scheduled</p>
+                    </div>
+                  ) : (
+                    getGamesForDate(selectedDate).map((game) => (
+                      <div
+                        key={game.id}
+                        onClick={() => {
+                          setSelectedGame(game);
+                          setSelectedDate(null);
+                        }}
+                        className="group p-5 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="text-2xl">{SPORT_EMOJIS[game.sport] || "🏆"}</div>
+                          <div>
+                            <div className="text-white font-black tracking-tight">{game.title}</div>
+                            <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
+                              <Clock className="w-3 h-3" />
+                              {format(new Date(game.date_time), "h:mm a")}
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="mt-10 pt-8 border-t border-white/5">
+                  <Link to={createPageUrl("Versus")}>
+                    <Button className="w-full h-16 bg-blue-600 hover:bg-blue-500 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-xs transition-all shadow-xl shadow-blue-900/20">
+                      Schedule a Match
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <GameDetailDialog
         game={selectedGame}
         onClose={() => setSelectedGame(null)}

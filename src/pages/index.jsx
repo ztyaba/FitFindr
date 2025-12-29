@@ -1,10 +1,11 @@
 import Layout from "./Layout.jsx"
 import Landing from "./Landing.jsx"
 
-import Browse from "./Browse"
-import ProfessionalProfile from "./ProfessionalProfile"
-import Versus from "./Versus"
-import Calendar from "./Calendar"
+import Browse from "./Browse.jsx"
+import ProfessionalProfile from "./ProfessionalProfile.jsx"
+import Versus from "./Versus.jsx"
+import Calendar from "./Calendar.jsx"
+import FitFindrAI from "./FitFindrAI.jsx"
 
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 import { createPageUrl } from "@/utils"
@@ -14,6 +15,7 @@ const APP_ROUTES = [
   { name: "ProfessionalProfile", element: <ProfessionalProfile /> },
   { name: "Versus", element: <Versus /> },
   { name: "Calendar", element: <Calendar /> },
+  { name: "FitFindr AI", element: <FitFindrAI /> },
 ]
 
 export default function Pages() {

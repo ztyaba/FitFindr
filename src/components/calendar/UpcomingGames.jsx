@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 const SPORT_EMOJIS = {
   basketball: "🏀",
-  tennis: "🎾", 
+  tennis: "🎾",
   soccer: "⚽",
   volleyball: "🏐",
   badminton: "🏸",
@@ -26,24 +26,26 @@ export default function UpcomingGames({ games, onGameSelect }) {
   };
 
   return (
-    <Card className="shadow-md border-0">
-      <CardHeader>
-        <CardTitle className="text-lg text-slate-900 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-emerald-600" />
-          Upcoming Games
+    <Card className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl">
+      <CardHeader className="border-b border-white/5 pb-6">
+        <CardTitle className="text-xl font-black text-white tracking-tight flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center border border-blue-500/30">
+            <Zap className="w-5 h-5 text-blue-400" />
+          </div>
+          Scheduled Matches
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         {games.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Zap className="w-8 h-8 text-slate-400" />
+          <div className="text-center py-12">
+            <div className="w-20 h-20 bg-white/5 border border-dashed border-white/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+              <Zap className="w-10 h-10 text-slate-700" />
             </div>
-            <p className="text-slate-600 text-sm">No upcoming games</p>
-            <p className="text-slate-500 text-xs mt-1">Join some games to see them here!</p>
+            <p className="text-white font-black uppercase tracking-widest text-[10px] mb-2">No Scheduled Matches</p>
+            <p className="text-slate-500 text-sm font-medium">Join some matches to see them here!</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {games.slice(0, 5).map((game, index) => (
               <motion.div
                 key={game.id}
@@ -51,44 +53,49 @@ export default function UpcomingGames({ games, onGameSelect }) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => onGameSelect(game)}
-                className="p-3 border border-slate-200 rounded-lg hover:border-emerald-300 hover:bg-emerald-50/50 transition-all cursor-pointer"
+                className="group p-5 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer overflow-hidden relative"
               >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{SPORT_EMOJIS[game.sport]}</span>
+                <div className="flex items-start justify-between relative z-10 gap-x-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-500">
+                      {SPORT_EMOJIS[game.sport] || "🏆"}
+                    </div>
                     <div>
-                      <div className="font-medium text-slate-900 text-sm">{game.title}</div>
-                      <div className="text-slate-600 text-xs">{game.location.venue_name}</div>
+                      <div className="font-black text-white text-base tracking-tight mb-0.5 line-clamp-1">{game.title}</div>
+                      <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3 text-blue-500" />
+                        {game.location.venue_name}
+                      </div>
                     </div>
                   </div>
-                  <Badge 
-                    variant="secondary" 
-                    className={`text-xs ${
-                      isToday(new Date(game.date_time)) ? 'bg-red-100 text-red-800' :
-                      isTomorrow(new Date(game.date_time)) ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-slate-100 text-slate-800'
-                    }`}
+                  <Badge
+                    className={`border-0 rounded-full px-4 py-1.5 font-black uppercase tracking-[0.1em] text-[10px] shadow-lg ${isToday(new Date(game.date_time)) ? 'bg-rose-500/20 text-rose-300 shadow-rose-900/10' :
+                        isTomorrow(new Date(game.date_time)) ? 'bg-amber-500/20 text-amber-300 shadow-amber-900/10' :
+                          'bg-emerald-500/20 text-emerald-300 shadow-emerald-900/10'
+                      }`}
                   >
                     {getDateLabel(new Date(game.date_time))}
                   </Badge>
                 </div>
-                
-                <div className="flex items-center gap-3 text-xs text-slate-500">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {format(new Date(game.date_time), "h:mm a")}
+
+                <div className="flex items-center gap-6 mt-5 pt-5 border-t border-white/5">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock className="w-4 h-4 text-blue-500" />
+                    <span className="text-xs font-bold uppercase tracking-widest">{format(new Date(game.date_time), "h:mm a")}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="w-3 h-3" />
-                    {game.current_players}/{game.max_players}
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Users className="w-4 h-4 text-emerald-500" />
+                    <span className="text-xs font-bold uppercase tracking-widest">{game.current_players}/{game.max_players} Players</span>
                   </div>
                 </div>
               </motion.div>
             ))}
-            
+
             {games.length > 5 && (
-              <div className="text-center pt-2">
-                <span className="text-sm text-slate-500">+{games.length - 5} more games</span>
+              <div className="text-center pt-4">
+                <Button variant="ghost" className="text-slate-500 font-bold uppercase tracking-widest text-[10px] hover:text-white transition-colors">
+                  View {games.length - 5} More Matches
+                </Button>
               </div>
             )}
           </div>

@@ -29,111 +29,102 @@ export default function ProfessionalCard({ professional, index }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
+      transition={{ delay: index * 0.05 }}
       className="group"
     >
-      <Card className="h-full bg-white hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 shadow-md overflow-hidden">
+      <Card className="h-full bg-slate-900 border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-xl hover:shadow-[0_20px_50px_-12px_rgba(59,130,246,0.3)] overflow-hidden group">
         <CardContent className="p-0">
-          {/* Profile Image */}
-          <div className="relative h-48 bg-gradient-to-br from-slate-200 to-slate-300 overflow-hidden">
+          {/* Profile Image with modern hover */}
+          <div className="relative h-56 bg-slate-800 overflow-hidden">
             {professional.profile_image ? (
               <img
                 src={professional.profile_image}
                 alt={professional.full_name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-100 to-emerald-200">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md">
-                  <span className="text-2xl font-bold text-emerald-600">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900/40 to-indigo-900/40">
+                <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20">
+                  <span className="text-3xl font-bold text-white">
                     {professional.full_name.charAt(0)}
                   </span>
                 </div>
               </div>
             )}
-            
+
+            {/* Glossy Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60" />
+
+            {/* Price Tag - Floating on image */}
+            <div className="absolute top-4 left-4 bg-blue-600 px-3 py-1.5 rounded-lg shadow-lg border border-blue-400/30">
+              <span className="text-sm font-bold text-white">${professional.hourly_rate}</span>
+              <span className="text-[10px] text-blue-100 font-medium ml-1">/hr</span>
+            </div>
+
             {/* Rating Badge */}
             {professional.rating && (
-              <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1 shadow-md">
-                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm font-medium text-slate-700">
+              <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-white/10">
+                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                <span className="text-xs font-bold text-white">
                   {professional.rating.toFixed(1)}
                 </span>
               </div>
             )}
           </div>
 
-          <div className="p-6">
-            {/* Header */}
-            <div className="mb-4">
-              <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors">
+          <div className="p-6 flex flex-col h-[calc(100%-14rem)]">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors tracking-tight">
                 {professional.full_name}
               </h3>
-              
-              <div className="flex items-center gap-4 text-sm text-slate-600 mb-3">
+
+              <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-400 mb-4">
                 <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="w-3.5 h-3.5 text-blue-500" />
                   {professional.location.city}, {professional.location.state}
                 </div>
                 {professional.experience_years && (
                   <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {professional.experience_years} years
+                    <Clock className="w-3.5 h-3.5 text-blue-500" />
+                    {professional.experience_years} years exp.
                   </div>
                 )}
               </div>
 
-              {/* Price */}
-              <div className="flex items-center gap-2 mb-4">
-                <DollarSign className="w-5 h-5 text-emerald-600" />
-                <span className="text-2xl font-bold text-slate-900">
-                  ${professional.hourly_rate}
-                </span>
-                <span className="text-slate-600">/hour</span>
-              </div>
-            </div>
-
-            {/* Specialties */}
-            <div className="mb-4">
-              <div className="flex flex-wrap gap-2">
+              {/* Specialties - Horizontal scrollable or wrap */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
                 {professional.specialties.slice(0, 3).map((specialty) => (
                   <Badge
                     key={specialty}
                     variant="secondary"
-                    className={`text-xs ${SPECIALTY_COLORS[specialty] || "bg-gray-100 text-gray-800"}`}
+                    className="text-[10px] uppercase font-bold tracking-wider bg-white/5 text-slate-300 border border-white/10"
                   >
-                    {specialty.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {specialty.replace(/_/g, ' ')}
                   </Badge>
                 ))}
                 {professional.specialties.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{professional.specialties.length - 3} more
+                  <Badge variant="outline" className="text-[10px] bg-transparent border-white/5 text-slate-500">
+                    +{professional.specialties.length - 3}
                   </Badge>
                 )}
               </div>
+
+              {/* Bio Preview - Better line clamping */}
+              {professional.bio && (
+                <p className="text-sm text-slate-400 mb-4 line-clamp-2 leading-relaxed">
+                  {professional.bio}
+                </p>
+              )}
             </div>
 
-            {/* Bio Preview */}
-            {professional.bio && (
-              <p className="text-sm text-slate-600 mb-4 line-clamp-2">
-                {professional.bio}
-              </p>
-            )}
-
-            {/* Certifications */}
-            {professional.certifications && professional.certifications.length > 0 && (
-              <div className="flex items-center gap-1 mb-4 text-sm text-slate-600">
-                <Award className="w-4 h-4 text-emerald-600" />
-                <span>{professional.certifications.length} certification{professional.certifications.length !== 1 ? 's' : ''}</span>
-              </div>
-            )}
-
-            {/* Action Button */}
-            <Link to={profileUrl} className="block">
-              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5">
-                View Profile
-              </Button>
-            </Link>
+            {/* Footer Action */}
+            <div className="mt-auto flex items-center justify-between gap-4">
+              <Link to={profileUrl} className="flex-1">
+                <Button className="w-full h-11 bg-white/[0.03] hover:bg-white/[0.08] text-white border border-white/10 hover:border-white/20 rounded-xl font-bold transition-all text-sm group-hover:bg-blue-600 group-hover:border-blue-500">
+                  View Profile
+                </Button>
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>

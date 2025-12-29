@@ -330,6 +330,7 @@ export const createSeedData = () => ({
         phone: '512-555-2200',
         website: 'https://austintexas.gov/department/downtown-rec-center'
       },
+      image_url: 'https://images.unsplash.com/photo-1544919932-21a51139460a?auto=format&fit=crop&w=800&q=80',
       location: {
         address: '800 W 11th St',
         city: 'Austin',
@@ -353,6 +354,7 @@ export const createSeedData = () => ({
         phone: '512-555-3311',
         website: 'https://capitalcitytennis.com'
       },
+      image_url: 'https://images.unsplash.com/photo-1595435064214-0ded169346e8?auto=format&fit=crop&w=800&q=80',
       location: {
         address: '2901 Manor Rd',
         city: 'Austin',
@@ -376,6 +378,7 @@ export const createSeedData = () => ({
         phone: '512-555-8899',
         website: 'https://moontowerbeach.com'
       },
+      image_url: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=800&q=80',
       location: {
         address: '500 E Riverside Dr',
         city: 'Austin',
@@ -399,6 +402,7 @@ export const createSeedData = () => ({
         phone: '512-555-7766',
         website: 'https://austintexas.gov/parks'
       },
+      image_url: 'https://images.unsplash.com/photo-1529900948632-5a2745bc0326?auto=format&fit=crop&w=800&q=80',
       location: {
         address: '2100 Barton Springs Rd',
         city: 'Austin',
@@ -422,6 +426,7 @@ export const createSeedData = () => ({
         phone: '512-555-6622',
         website: 'https://southlamarcourts.org'
       },
+      image_url: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
       location: {
         address: '3000 S Lamar Blvd',
         city: 'Austin',

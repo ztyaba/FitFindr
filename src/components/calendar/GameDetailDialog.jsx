@@ -13,7 +13,7 @@ import { Calendar, MapPin, Users, Clock, DollarSign, Award } from "lucide-react"
 const SPORT_EMOJIS = {
   basketball: "🏀",
   tennis: "🎾",
-  soccer: "⚽", 
+  soccer: "⚽",
   volleyball: "🏐",
   badminton: "🏸",
   table_tennis: "🏓",
@@ -50,149 +50,129 @@ export default function GameDetailDialog({ game, onClose, onJoin }) {
 
   return (
     <Dialog open={!!game} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 text-2xl">
-            <span className="text-3xl">{SPORT_EMOJIS[game.sport]}</span>
-            {game.title}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Sport and Status */}
-          <div className="flex items-center gap-3">
-            <Badge className={`${SPORT_COLORS[game.sport]} border-0`}>
-              {game.sport.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+      <DialogContent className="max-w-3xl bg-slate-900/90 backdrop-blur-[40px] border border-white/10 rounded-[3rem] overflow-hidden p-0 shadow-2xl">
+        <div className="relative h-64 w-full overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-900/40" />
+          <div className="absolute inset-0 flex items-center justify-center opacity-30">
+            <span className="text-9xl transform -rotate-12">{SPORT_EMOJIS[game.sport] || "🏆"}</span>
+          </div>
+          <div className="absolute top-8 right-8 flex gap-3">
+            <Badge className={`${SPORT_COLORS[game.sport]} border-0 px-4 py-1.5 rounded-full font-black uppercase tracking-widest text-[10px]`}>
+              {game.sport?.replace(/_/g, ' ')}
             </Badge>
-            <Badge variant={isGameFull ? "destructive" : "secondary"} className={isGameFull ? "" : "bg-green-100 text-green-800"}>
+            <Badge variant={isGameFull ? "destructive" : "secondary"} className={`border-0 px-4 py-1.5 rounded-full font-black uppercase tracking-widest text-[10px] ${isGameFull ? "bg-rose-500/20 text-rose-300" : "bg-emerald-500/20 text-emerald-300"}`}>
               {isGameFull ? "FULL" : "OPEN"}
             </Badge>
           </div>
 
+          <div className="absolute bottom-8 left-8 right-8">
+            <h2 className="text-4xl font-black text-white tracking-tight leading-none mb-2">
+              {game.title}
+            </h2>
+          </div>
+        </div>
+
+        <div className="p-10 space-y-10 max-h-[70vh] overflow-y-auto glass-scrollbar">
           {/* Details Grid */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-slate-500" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+                  <Calendar className="w-6 h-6 text-blue-400" />
+                </div>
                 <div>
-                  <div className="font-medium">{format(new Date(game.date_time), "EEEE, MMMM d")}</div>
-                  <div className="text-slate-600">{format(new Date(game.date_time), "h:mm a")}</div>
+                  <div className="text-lg font-black text-white tracking-tight">{format(new Date(game.date_time), "EEEE, MMMM d")}</div>
+                  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">{format(new Date(game.date_time), "h:mm a")}</div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-slate-500 mt-0.5" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+                  <MapPin className="w-6 h-6 text-blue-400" />
+                </div>
                 <div>
-                  <div className="font-medium">{game.location.venue_name}</div>
-                  <div className="text-slate-600">{game.location.city}, {game.location.state}</div>
+                  <div className="text-lg font-black text-white tracking-tight">{game.location.venue_name}</div>
+                  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">{game.location.city}, {game.location.state}</div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5 text-slate-500" />
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+                  <Users className="w-6 h-6 text-emerald-400" />
+                </div>
                 <div>
-                  <div className="font-medium">{game.current_players}/{game.max_players} Players</div>
-                  <div className="text-slate-600">
-                    {game.max_players - game.current_players > 0 && 
-                      `${game.max_players - game.current_players} spots left`
+                  <div className="text-lg font-black text-white tracking-tight">{game.current_players}/{game.max_players} Players</div>
+                  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+                    {game.max_players - game.current_players > 0
+                      ? `${game.max_players - game.current_players} spots remaining`
+                      : 'Matchup is full'
                     }
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <Clock className="w-5 h-5 text-slate-500" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+                  <Clock className="w-6 h-6 text-blue-400" />
+                </div>
                 <div>
-                  <div className="font-medium">{game.duration_minutes} minutes</div>
-                  <div className="text-slate-600">Game duration</div>
+                  <div className="text-lg font-black text-white tracking-tight">{game.duration_minutes} Minutes</div>
+                  <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Match Duration</div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {game.cost_per_person > 0 && (
-                <div className="flex items-center gap-3">
-                  <DollarSign className="w-5 h-5 text-slate-500" />
-                  <div>
-                    <div className="font-medium">${game.cost_per_person}</div>
-                    <div className="text-slate-600">per person</div>
-                  </div>
-                </div>
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 py-10 border-y border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+                <DollarSign className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-black text-white tracking-tight">${game.cost_per_person || 0}</div>
+                <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Per Spot</div>
+              </div>
+            </div>
 
-              <div className="flex items-center gap-3">
-                <Award className="w-5 h-5 text-slate-500" />
-                <div>
-                  <div className="font-medium capitalize">{game.skill_level.replace(/_/g, ' ')}</div>
-                  <div className="text-slate-600">Skill level</div>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+                <Award className="w-6 h-6 text-yellow-500" />
+              </div>
+              <div>
+                <div className="text-lg font-black text-white tracking-tight capitalize">{game.skill_level?.replace(/_/g, ' ')}</div>
+                <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Skill Level</div>
               </div>
             </div>
           </div>
 
           {/* Description */}
           {game.description && (
-            <div>
-              <h4 className="font-medium mb-2">Game Details</h4>
-              <p className="text-slate-600">{game.description}</p>
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Match Logistics</h4>
+              <p className="text-slate-300 leading-relaxed font-medium">{game.description}</p>
             </div>
           )}
 
-          {/* Equipment */}
-          {(game.equipment_provided?.length > 0 || game.equipment_needed?.length > 0) && (
-            <div className="grid grid-cols-2 gap-4">
-              {game.equipment_provided?.length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-2">Equipment Provided</h4>
-                  <ul className="text-slate-600 text-sm space-y-1">
-                    {game.equipment_provided.map((item, index) => (
-                      <li key={index}>• {item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {game.equipment_needed?.length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-2">Bring Your Own</h4>
-                  <ul className="text-slate-600 text-sm space-y-1">
-                    {game.equipment_needed.map((item, index) => (
-                      <li key={index}>• {item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Organizer */}
-          {game.organizer_name && (
-            <div className="pt-4 border-t">
-              <div className="text-sm text-slate-600">
-                Organized by <span className="font-medium">{game.organizer_name}</span>
-                {game.organizer_contact && (
-                  <span> • {game.organizer_contact}</span>
-                )}
+          {/* Organizer Info */}
+          <div className="pt-8 border-t border-white/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Organizer</div>
+                <div className="text-white font-black">{game.organizer_name}</div>
               </div>
+              <Button
+                onClick={handleJoinGame}
+                disabled={isGameFull}
+                className={`h-16 px-12 rounded-[1.5rem] font-black uppercase tracking-[0.2em] transition-all shadow-xl ${isGameFull
+                    ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20 active:scale-95'
+                  }`}
+              >
+                {isGameFull ? "Match Full" : "Join Matchup"}
+              </Button>
             </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Close
-            </Button>
-            <Button
-              onClick={handleJoinGame}
-              disabled={isGameFull}
-              className={`flex-1 ${
-                isGameFull 
-                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
-                  : 'bg-emerald-600 hover:bg-emerald-700'
-              }`}
-            >
-              {isGameFull ? "Game Full" : "Join Game"}
-            </Button>
           </div>
         </div>
       </DialogContent>
