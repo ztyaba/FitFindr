@@ -41,8 +41,7 @@ export default function Layout({ children }) {
   // These pages manage their own navigation (floating navbar or custom grid header)
   const isBrowsePage = location.pathname === createPageUrl("Browse");
   const isVersusPage = location.pathname === createPageUrl("Versus");
-  const isCalendarPage = location.pathname === createPageUrl("Calendar");
-  const shouldHideLayoutNav = isBrowsePage || isVersusPage || isCalendarPage;
+  const shouldHideLayoutNav = isBrowsePage || isVersusPage;
 
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/99b4f91f-a089-4227-b05d-f4392b5d7598', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Layout.jsx:36', message: 'Layout render', data: { pathname: location.pathname, browseUrl: createPageUrl("Browse"), isBrowsePage, timestamp: Date.now() }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
@@ -56,14 +55,8 @@ export default function Layout({ children }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               {/* Logo */}
-              <Link to={createPageUrl("Browse")} className="flex items-center gap-3 group">
-                <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-105" />
-                <div className="hidden sm:block">
-                  <h1 className="text-xl font-black text-white tracking-tight">
-                    FitFindr
-                  </h1>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest -mt-1">Connect. Train. Compete.</p>
-                </div>
+              <Link to="/" className="flex items-center gap-3 group">
+                <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-110" />
               </Link>
 
               {/* Desktop Navigation */}
@@ -93,15 +86,11 @@ export default function Layout({ children }) {
                     <Menu className="w-5 h-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80">
+                <SheetContent side="right" className="w-80 bg-slate-950 border-white/10 text-white">
                   <div className="flex items-center gap-3 mb-8">
-                    <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center">
-                      <Users className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="font-bold text-slate-900">FitFindr</h2>
-                      <p className="text-xs text-slate-500">Connect. Train. Compete.</p>
-                    </div>
+                    <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+                      <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-transform active:scale-95" />
+                    </Link>
                   </div>
 
                   <nav className="space-y-2">
@@ -113,11 +102,11 @@ export default function Layout({ children }) {
                           to={item.url}
                           onClick={() => setMobileMenuOpen(false)}
                           className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50'
+                            ? 'bg-blue-600/10 text-blue-400'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5'
                             }`}
                         >
-                          <item.icon className="w-5 h-5" />
+                          <item.icon className={`w-5 h-5 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
                           <span className="font-medium">{item.title}</span>
                         </Link>
                       );
@@ -140,15 +129,11 @@ export default function Layout({ children }) {
         <footer className="bg-slate-950 border-t border-white/10 text-slate-400">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-              <div className="flex items-center gap-4 mb-4 md:mb-0">
-                <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr" className="h-10 w-auto opacity-80" />
-                <div>
-                  <h3 className="font-black text-white text-lg tracking-tight">FitFindr</h3>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Connect. Train. Compete.</p>
-                </div>
-              </div>
+              <Link to="/" className="flex items-center gap-4 mb-4 md:mb-0 group">
+                <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr" className="h-10 w-auto opacity-80 transition-all group-hover:opacity-100 group-hover:scale-105" />
+              </Link>
               <div className="flex items-center gap-12 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
-                <Link to={createPageUrl("Browse")} className="hover:text-blue-400 transition-colors">Find Pros</Link>
+                <Link to="/" className="hover:text-blue-400 transition-colors">Find Pros</Link>
                 <Link to={createPageUrl("Versus")} className="hover:text-blue-400 transition-colors">Versus</Link>
                 <Link to={createPageUrl("Calendar")} className="hover:text-blue-400 transition-colors">Calendar</Link>
                 <Link to={createPageUrl("FitFindr AI")} className="hover:text-blue-400 transition-colors">FitFindr AI</Link>

@@ -13,28 +13,7 @@ import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 
-const navigationItems = [
-  {
-    title: "Find Professionals",
-    url: createPageUrl("Browse"),
-    icon: Users,
-  },
-  {
-    title: "FitFindr Versus",
-    url: createPageUrl("Versus"),
-    icon: Zap,
-  },
-  {
-    title: "My Calendar",
-    url: createPageUrl("Calendar"),
-    icon: CalendarIcon,
-  },
-  {
-    title: "FitFindr AI",
-    url: createPageUrl("FitFindr AI"),
-    icon: Sparkles,
-  },
-];
+
 
 const SPORT_EMOJIS = {
   basketball: "🏀",
@@ -158,46 +137,6 @@ export default function Calendar() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-blue-500/30">
-      {/* Sticky Top Header */}
-      <header className="sticky top-0 z-[200] w-full bg-slate-900/50 backdrop-blur-xl border-b border-white/10 px-8 h-20 flex items-center justify-between">
-        <Link to={createPageUrl("Browse")} className="flex items-center gap-3 group">
-          <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-105" />
-          <div className="hidden sm:block">
-            <h1 className="text-xl font-black text-white tracking-tight">FitFindr</h1>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest -mt-1">My Schedule</p>
-          </div>
-        </Link>
-
-        <nav className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10">
-          {navigationItems.map((item) => {
-            const isActive = item.url.includes("Calendar");
-            return (
-              <Link key={item.title} to={item.url}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-11 px-6 rounded-xl flex items-center gap-2 transition-all duration-300 ${isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                    }`}
-                >
-                  <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
-                  <span className="text-sm font-bold">{item.title}</span>
-                </Button>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            className="h-11 px-6 rounded-xl bg-white/5 border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/10"
-          >
-            Settings
-          </Button>
-        </div>
-      </header>
 
       <main className="max-w-7xl mx-auto px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">

@@ -32,9 +32,10 @@ export default function GameFilters({ filters, setFilters, onClose }) {
       initial={{ opacity: 0, scale: 0.95, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
       className="bg-slate-900/90 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden"
     >
-      <div className="p-10">
+      <div className="p-8 sm:p-10">
         <div className="flex justify-between items-center mb-10">
           <div>
             <h3 className="text-3xl font-black text-white tracking-tight">Refine Matchups</h3>
@@ -46,7 +47,7 @@ export default function GameFilters({ filters, setFilters, onClose }) {
               onClick={clearFilters}
               className="text-slate-400 hover:text-white font-black uppercase text-[10px] tracking-widest px-4 h-10 bg-white/5 border border-white/5 rounded-xl transition-all"
             >
-              Reset Filters
+              Reset
             </Button>
             <Button
               variant="ghost"
@@ -59,7 +60,7 @@ export default function GameFilters({ filters, setFilters, onClose }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 max-h-[60vh] overflow-y-auto pr-2 glass-scrollbar">
           {/* Sport */}
           <div className="space-y-4">
             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Sport Discipline</Label>
@@ -150,7 +151,7 @@ export default function GameFilters({ filters, setFilters, onClose }) {
         <div className="mt-12 flex justify-end">
           <Button
             onClick={onClose}
-            className="h-14 px-10 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-900/20 transition-all active:scale-95"
+            className="w-full sm:w-auto h-14 px-10 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-900/20 transition-all active:scale-95"
           >
             Apply Filters
           </Button>

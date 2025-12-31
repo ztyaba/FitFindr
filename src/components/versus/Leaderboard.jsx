@@ -25,7 +25,7 @@ const RANK_COLORS = {
   3: "from-blue-500 to-blue-700",
 };
 
-export default function Leaderboard({ players = [], tone = "light" }) {
+export default function Leaderboard({ players = [], tone = "light", isMobileView = false }) {
   const isDark = tone === "dark";
   const [selectedSport, setSelectedSport] = useState("overall");
 
@@ -108,36 +108,56 @@ export default function Leaderboard({ players = [], tone = "light" }) {
   const rankingRowBg = "bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-all duration-300";
 
   return (
-    <div className="space-y-12">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-500/10 rounded-xl">
-              <Trophy className="w-8 h-8 text-yellow-500" />
+    <div className={isMobileView ? "space-y-6" : "space-y-12"}>
+      {/* Header - Hidden in mobile modal since we have a custom header there */}
+      {!isMobileView && (
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-yellow-500/10 rounded-xl">
+                <Trophy className="w-8 h-8 text-yellow-500" />
+              </div>
+              <h2 className="text-4xl font-black text-white tracking-tight">Hall of Fame</h2>
             </div>
-            <h2 className="text-4xl font-black text-white tracking-tight">Hall of Fame</h2>
+            <p className="text-slate-400 font-medium text-lg">Top competitors in your local arena</p>
           </div>
-          <p className="text-slate-400 font-medium text-lg">Top competitors in your local arena</p>
-        </div>
 
-        {/* Sport Tabs */}
-        <Tabs value={selectedSport} onValueChange={setSelectedSport} className="w-full md:w-auto">
-          <TabsList className={tabListBg}>
-            <TabsTrigger value="overall" className={tabTriggerBase}>
-              Overall
-            </TabsTrigger>
-            {availableSports.filter(sport => sport !== "overall").slice(0, 4).map((sport) => (
-              <TabsTrigger key={sport} value={sport} className={tabTriggerBase}>
-                <span className="mr-2">{SPORT_EMOJIS[sport]}</span>
-                <span className="capitalize">{sport.replace(/_/g, ' ')}</span>
+          {/* Sport Tabs */}
+          <Tabs value={selectedSport} onValueChange={setSelectedSport} className="w-full md:w-auto">
+            <TabsList className={tabListBg}>
+              <TabsTrigger value="overall" className={tabTriggerBase}>
+                Overall
               </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+              {availableSports.filter(sport => sport !== "overall").slice(0, 4).map((sport) => (
+                <TabsTrigger key={sport} value={sport} className={tabTriggerBase}>
+                  <span className="mr-2">{SPORT_EMOJIS[sport]}</span>
+                  <span className="capitalize">{sport.replace(/_/g, ' ')}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
 
-      <div className="grid gap-12">
+      {isMobileView && (
+        <div className="mb-6">
+          <Tabs value={selectedSport} onValueChange={setSelectedSport} className="w-full">
+            <TabsList className={`${tabListBg} flex overflow-x-auto no-scrollbar`}>
+              <TabsTrigger value="overall" className={`${tabTriggerBase} px-4`}>
+                Global
+              </TabsTrigger>
+              {availableSports.filter(sport => sport !== "overall").slice(0, 3).map((sport) => (
+                <TabsTrigger key={sport} value={sport} className={`${tabTriggerBase} px-4`}>
+                  <span className="mr-1">{SPORT_EMOJIS[sport]}</span>
+                  <span className="capitalize text-[8px]">{sport.split('_')[0]}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
+
+      <div className={isMobileView ? "grid gap-6" : "grid gap-12"}>
         <AnimatePresence mode="wait">
           <motion.div
             key={selectedSport}
@@ -147,7 +167,7 @@ export default function Leaderboard({ players = [], tone = "light" }) {
             transition={{ duration: 0.3 }}
           >
             {/* Top 3 Podium - Modern Design */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 items-end">
+            <div className={`grid ${isMobileView ? 'grid-cols-1 gap-4 scale-95' : 'grid-cols-1 md:grid-cols-3 gap-8'} mb-16 items-end`}>
               {getPlayersByRating(selectedSport).slice(0, 3).map((player, index) => {
                 const rank = index + 1;
                 const isWinner = rank === 1;
@@ -157,9 +177,9 @@ export default function Leaderboard({ players = [], tone = "light" }) {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.1 }}
-                    className={`relative ${isWinner ? 'md:order-2 z-10' : rank === 2 ? 'md:order-1' : 'md:order-3'}`}
+                    className={`relative ${isWinner ? 'md:order-2 z-10' : rank === 2 ? 'md:order-1' : 'md:order-3'} ${isMobileView && rank !== 1 ? 'hidden' : ''}`}
                   >
-                    <div className={`relative group ${isWinner ? 'scale-110' : 'scale-100'}`}>
+                    <div className={`relative group ${isWinner ? (isMobileView ? 'scale-100' : 'scale-110') : 'scale-100'}`}>
                       {/* Glow Background */}
                       <div className={`absolute -inset-1 bg-gradient-to-r ${rank === 1 ? 'from-yellow-400 to-amber-600' :
                         rank === 2 ? 'from-slate-300 to-slate-500' :

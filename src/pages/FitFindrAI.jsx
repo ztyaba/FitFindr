@@ -3,6 +3,8 @@ import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-
 import JSZip from "jszip";
 import { Sparkles, Camera, Video, Loader2, RefreshCcw, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ExerciseSelectorModal from "@/components/fitfindr/ExerciseSelectorModal";
+import exercises from "@/data/exercises.json";
 
 const getSupportedMimeType = () => {
   if (typeof MediaRecorder === "undefined") return "";
@@ -20,6 +22,106 @@ const REVIEW_COPY = {
   needs_capture: "Capture your form first so we can analyze the pose data.",
   queued: "Ready to send. Hook this to your backend to run Gemini analysis.",
 };
+
+const PROMPT_TEXT = `FITFINDER AI ANALYSIS PROMPT (UNIVERSAL)
+
+You are an AI movement and exercise analysis assistant for Fitfinder.
+
+You will be given a single AI analysis package representing one completed recording session.
+The package is automatically generated after the user stops recording.
+
+The AI package contains:
+- A user exercise video
+- Pose / landmark data extracted during recording
+- Session metadata (timestamps, confidence, repetitions, etc.)
+- A user-selected exercise OR a user-typed custom exercise name
+- This prompt file, which defines your behavior
+
+----------------------------------------
+
+YOUR RESPONSIBILITIES
+
+1. IDENTIFY THE EXERCISE
+- Use both:
+  - the user-selected or user-typed exercise name
+  - the observed movement patterns from the video and landmark data
+- If the user selected "Other" and typed a custom exercise:
+  - interpret the exercise based on the provided name and movement evidence
+- If there is a mismatch between user input and observed movement:
+  - prioritize movement evidence
+  - briefly explain the discrepancy in plain language
+
+----------------------------------------
+
+2. ANALYZE MOVEMENT QUALITY
+- Evaluate the movement based on best practices for the identified exercise
+- Focus only on issues that meaningfully affect:
+  - safety
+  - efficiency
+  - performance
+- Ignore minor or cosmetic deviations
+- Use landmark confidence and biomechanical signals to support conclusions
+
+----------------------------------------
+
+3. LOCATE THE PROBLEM MOMENT (GROUND TRUTH)
+- Identify the specific frame or moment where form breakdown is most evident
+  (e.g. peak load, deepest position, transition phase, loss of balance or alignment)
+- This moment must be supported by landmark data and movement analysis
+- Select one representative frame from the user's video at this moment
+
+----------------------------------------
+
+4. EXTRACT AND ANNOTATE THE REAL VIDEO FRAME
+- Extract the selected frame directly from the user's video
+- Overlay clear, minimal visual annotations on this image, such as:
+  - lines
+  - arrows
+  - angles
+  - highlights
+- Annotations should clearly show what is incorrect for this exercise
+- This image must be derived from the user's actual video and landmark data
+
+----------------------------------------
+
+5. EXPLAIN THE ISSUE (SIMPLE LANGUAGE)
+Provide a short, user-friendly explanation that:
+- Describes what is happening in the annotated frame
+- Explains why it matters for this specific exercise
+- Uses plain language without medical or technical jargon
+
+----------------------------------------
+
+6. GENERATE A CORRECTED EXAMPLE IMAGE
+- Generate a separate example image showing correct form for the same exercise
+- Match the general camera angle and body orientation when possible
+- Overlay simple visual indicators showing correct alignment or movement
+- This image is a generated reference example, not taken from the user's video
+
+----------------------------------------
+
+7. EXPLAIN THE CORRECTION
+Briefly explain:
+- Why the corrected example is better than the user's form
+- What the user should focus on during their next attempt
+- One or two simple, actionable cues
+
+----------------------------------------
+
+OUTPUT REQUIREMENTS
+- Feedback must be concise, supportive, and actionable
+- Visuals must be instructional, not decorative
+- Clearly distinguish between:
+  - the annotated real screenshot (from the user's video)
+  - the generated correct-form example image
+- Assume the user has no biomechanics background
+
+Your goal is to help the user immediately understand:
+- what went wrong
+- why it matters
+- how to fix it
+
+END PROMPT`;
 
 export default function FitFindrAI() {
   const videoRef = useRef(null);
@@ -53,6 +155,8 @@ export default function FitFindrAI() {
   const [reviewStatus, setReviewStatus] = useState("idle");
   const [captureCount, setCaptureCount] = useState(0);
   const [downloadError, setDownloadError] = useState("");
+  const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
+  const [exerciseSelection, setExerciseSelection] = useState(null);
 
   const stopStream = ({ shouldSaveRecording = true, shouldUpdateState = true } = {}) => {
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
@@ -243,7 +347,7 @@ export default function FitFindrAI() {
     isRecordingRef.current = isRecording;
   }, [isRecording]);
 
-  const handleCaptureForm = async () => {
+  const handleContinue = async () => {
     setShowIntro(false);
     setPoseError("");
     if (isCameraOn) {
@@ -275,7 +379,9 @@ export default function FitFindrAI() {
 
     const extension = recordedType.includes("mp4") ? "mp4" : "webm";
     const payload = {
-      exercise: "unspecified",
+      exercise: exerciseSelection
+        ? { source: exerciseSelection.source, name: exerciseSelection.name }
+        : null,
       camera: {
         facingMode,
         width: captureMetaRef.current.width,
@@ -291,25 +397,7 @@ export default function FitFindrAI() {
     };
 
     const prompt = {
-      task: "Analyze exercise form from pose landmarks with optional video reference.",
-      instructions: [
-        "Use the landmarks to assess joint angles, range of motion, stability, and symmetry.",
-        "Identify form issues and provide corrective cues.",
-        "Flag low-confidence frames or occlusions.",
-        "Return clear, actionable feedback with a score.",
-      ],
-      output_schema: {
-        score: "number 0-10",
-        issues: [
-          {
-            title: "string",
-            evidence: "string",
-            correction: "string",
-          },
-        ],
-        cues: ["string"],
-        confidence: "number 0-1",
-      },
+      prompt: PROMPT_TEXT,
     };
 
     try {
@@ -441,78 +529,96 @@ export default function FitFindrAI() {
                 <Sparkles className="h-5 w-5 text-blue-300" />
               </div>
               <div>
-                <h2 className="text-xl font-black">Welcome To FitFindr AI</h2>
-                <p className="text-xs text-slate-400">Accept camera access to capture form for analysis.</p>
+                <h2 className="text-xl font-black">Welcome to Fitfindr AI</h2>
+                <p className="mt-2 text-sm text-slate-300">
+                  Analyze your form using real-time motion capture and AI-powered movement analysis. All
+                  tracking and processing happens securely on your device—nothing is stored or saved.
+                </p>
+                <p className="mt-2 text-sm text-slate-300">Enable camera access to get started.</p>
               </div>
             </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button className="flex-1" onClick={handleCaptureForm}>
-                Capture Form
-              </Button>
-              <Button className="flex-1" variant="outline" onClick={handleSendForReview}>
-                Send for Review
+            <div className="mt-6">
+              <Button className="w-full" onClick={handleContinue}>
+                continue
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex min-h-screen flex-col">
-        <div className="relative flex-1 min-h-[65vh] bg-slate-950">
-          <video
-            ref={videoRef}
-            className="h-full w-full object-cover"
-            playsInline
-            muted
-          />
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 h-full w-full pointer-events-none"
-          />
+      <ExerciseSelectorModal
+        isOpen={isExerciseModalOpen}
+        onClose={() => setIsExerciseModalOpen(false)}
+        onConfirm={(selection) => {
+          setExerciseSelection(selection);
+          setIsExerciseModalOpen(false);
+        }}
+        exercises={exercises}
+        initialSelection={exerciseSelection}
+      />
 
-          {!isCameraOn && (
-            <div className="absolute inset-0 grid place-items-center text-slate-500 text-sm">
-              <div className="flex flex-col items-center gap-3">
-                <Camera className="h-8 w-8" />
-                <span>Tap Capture Form to begin.</span>
+      <div className="flex min-h-screen flex-col">
+        <div className="bg-slate-950 px-4 pb-6 pt-6">
+          <div className="relative mx-auto h-[52vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950 sm:h-[58vh] lg:h-[62vh]">
+            <video
+              ref={videoRef}
+              className="h-full w-full object-cover"
+              playsInline
+              muted
+            />
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 h-full w-full pointer-events-none"
+            />
+
+            {!isCameraOn && (
+              <div className="absolute inset-0 grid place-items-center text-slate-500 text-sm">
+                <div className="flex flex-col items-center gap-3">
+                  <Camera className="h-8 w-8" />
+                  <span>Tap Capture Form to begin.</span>
+                </div>
+              </div>
+            )}
+
+            <div className="absolute inset-x-0 top-4 flex flex-wrap items-center justify-between gap-3 px-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-300">
+                <Sparkles className="h-4 w-4 text-blue-400" />
+                FitFindr AI
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleSwitchCamera}
+                  disabled={!isCameraOn || isStarting}
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Switch Camera
+                </Button>
+                <Button size="sm" variant="outline" onClick={stopCamera} disabled={!isCameraOn}>
+                  Stop Camera
+                </Button>
               </div>
             </div>
-          )}
 
-          <div className="absolute inset-x-0 top-4 flex flex-wrap items-center justify-between gap-3 px-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-300">
-              <Sparkles className="h-4 w-4 text-blue-400" />
-              FitFindr AI
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleSwitchCamera}
-                disabled={!isCameraOn || isStarting}
+            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 text-xs">
+              <span
+                className={`rounded-full border border-white/10 px-3 py-1 font-bold ${
+                  isCameraOn ? "bg-emerald-500/20 text-emerald-200" : "bg-white/5 text-slate-400"
+                }`}
               >
-                <RefreshCcw className="h-4 w-4" />
-                Switch Camera
-              </Button>
-              <Button size="sm" variant="outline" onClick={stopCamera} disabled={!isCameraOn}>
-                Stop Camera
-              </Button>
+                {isCameraOn ? "Camera On" : "Camera Off"}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-bold text-slate-300">
+                Pose: {poseStatus}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-bold text-slate-300">
+                Landmarks: {landmarks.length}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-bold text-slate-300">
+                {facingMode === "environment" ? "Back Camera" : "Front Camera"}
+              </span>
             </div>
-          </div>
-
-          <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 text-xs">
-            <span className={`rounded-full border border-white/10 px-3 py-1 font-bold ${isCameraOn ? "bg-emerald-500/20 text-emerald-200" : "bg-white/5 text-slate-400"}`}>
-              {isCameraOn ? "Camera On" : "Camera Off"}
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-bold text-slate-300">
-              Pose: {poseStatus}
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-bold text-slate-300">
-              Landmarks: {landmarks.length}
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-bold text-slate-300">
-              {facingMode === "environment" ? "Back Camera" : "Front Camera"}
-            </span>
           </div>
         </div>
 
@@ -558,7 +664,24 @@ export default function FitFindrAI() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <Button onClick={handleCaptureForm} disabled={isStarting}>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                    Exercise selection
+                  </p>
+                  <Button
+                    className="mt-3 w-full border-white/20 bg-slate-950/70 text-slate-100 hover:bg-slate-900/80"
+                    variant="outline"
+                    onClick={() => setIsExerciseModalOpen(true)}
+                  >
+                    Select Exercise for Accuracy
+                  </Button>
+                  <p className="mt-3 text-xs text-slate-400">
+                    {exerciseSelection
+                      ? `Selected: ${exerciseSelection.name}`
+                      : "No exercise selected yet."}
+                  </p>
+                </div>
+                <Button onClick={handleContinue} disabled={isStarting}>
                   {isStarting ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -572,6 +695,7 @@ export default function FitFindrAI() {
                   variant="outline"
                   onClick={handleSendForReview}
                   disabled={!landmarks.length && !recordedUrl}
+                  className="border-white/20 bg-slate-950/70 text-slate-100 hover:bg-slate-900/80"
                 >
                   Send for Review
                 </Button>

@@ -12,6 +12,9 @@ import SearchFilters from "../components/browse/SearchFilters";
 import MapView from "../components/browse/MapView";
 import LoadingState from "../components/browse/LoadingState";
 import ProfileDrawer from "../components/browse/ProfileDrawer";
+import { Drawer as VaulDrawer } from "vaul";
+
+const MOBILE_DRAWER_SNAP_POINTS = [0.25, 0.5, 0.9];
 
 /**
  * Browse Page - Full-screen map overlay UI
@@ -49,9 +52,10 @@ export default function Browse() {
   const [selectedProfessionalForCard, setSelectedProfessionalForCard] = useState(null);
   const [isShowAllMode, setIsShowAllMode] = useState(true); // Start in show all mode
   const [layoutMode, setLayoutMode] = useState("map"); // "map" or "grid"
-
-  // Check if mobile - must be defined before useEffects that use it
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const [activeDrawerSnap, setActiveDrawerSnap] = useState(MOBILE_DRAWER_SNAP_POINTS[0]);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768
+  );
 
   // Auto-hide tapped professional tooltip after 5 seconds (mobile)
   useEffect(() => {
@@ -62,6 +66,14 @@ export default function Browse() {
       return () => clearTimeout(timer);
     }
   }, [tappedProfessional, isMobile]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Navigation items for header
   const navigationItems = [
@@ -200,6 +212,9 @@ export default function Browse() {
     setHoveredProfessional(null);
     // Exit show all mode when zooming to a specific professional
     setIsShowAllMode(false);
+    if (isMobile) {
+      setActiveDrawerSnap(MOBILE_DRAWER_SNAP_POINTS[0]);
+    }
 
     if (zoomToProfessionalRef.current) {
       zoomToProfessionalRef.current(professional);
@@ -208,11 +223,185 @@ export default function Browse() {
     setSelectedProfessionalForCard(professional);
   }, []);
 
+  const handleMarkerSelect = useCallback(() => {
+    setIsShowAllMode(false);
+    setSelectedProfessionalForCard(null);
+    if (isMobile) {
+      setActiveDrawerSnap(MOBILE_DRAWER_SNAP_POINTS[0]);
+    }
+  }, [isMobile]);
+
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/99b4f91f-a089-4227-b05d-f4392b5d7598', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Browse.jsx:152', message: 'Browse render called', data: { isLoading, filteredCount: filteredProfessionals.length, timestamp: Date.now() }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' }) }).catch(() => { });
   // #endregion
 
   const isMapLayout = layoutMode === "map";
+
+  const renderFloatingHeader = () => (
+    <motion.header
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.2 }}
+      className="absolute top-6 left-1/2 -translate-x-1/2 z-[220] w-auto"
+    >
+      <nav
+        className="flex items-center gap-1 p-1.5 bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-white/10 shadow-2xl"
+        aria-label="Primary"
+      >
+        {navigationItems.map((item) => {
+          const isActive = location.pathname === item.url;
+          return (
+            <Link
+              key={item.title}
+              to={item.url}
+              aria-label={item.title}
+              className={`relative ${isMobile ? "px-3 py-2" : "px-5 py-2.5"} rounded-[2rem] text-[10px] md:text-sm font-black tracking-widest transition-all duration-300 flex items-center gap-2 ${isActive
+                ? "text-white bg-blue-600 shadow-lg shadow-blue-600/30"
+                : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+            >
+              <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+              <span className="sr-only">{item.title}</span>
+              <span className="hidden md:inline">{item.title}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </motion.header>
+  );
+
+
+
+  const renderMobileDrawer = () => {
+    if (!isMobile) return null;
+
+    return (
+      <div className="absolute inset-0 pointer-events-none z-[160]">
+        <VaulDrawer.Root
+          open
+          modal={false}
+          dismissible={false}
+          snapPoints={MOBILE_DRAWER_SNAP_POINTS}
+          activeSnapPoint={activeDrawerSnap}
+          setActiveSnapPoint={setActiveDrawerSnap}
+        >
+          <VaulDrawer.Content className="fixed bottom-0 left-0 right-0 max-h-[92vh] outline-none flex flex-col z-[190] pointer-events-auto">
+            <motion.div
+              initial={{ y: 120, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="flex-1 bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]"
+            >
+              <div className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 px-5 pt-2 pb-3">
+                <div className="flex items-center justify-center">
+                  <div className="drawer-handle shadow-sm" />
+                </div>
+
+                <div className="mt-2 relative flex items-center justify-center">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[11px] font-black text-white uppercase tracking-[0.2em]">
+                      Find a Pro
+                    </p>
+                    <span className="text-slate-700 mx-1">•</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xl font-black text-blue-400">
+                        {visibleProfessionals.length}
+                      </span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        In View
+                      </span>
+                    </div>
+                  </div>
+                  <div className="absolute right-0">
+                    <Button
+                      onClick={() => setShowFilters(true)}
+                      variant="ghost"
+                      className="h-10 w-10 rounded-[2rem] bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                    >
+                      <Filter className="w-4 h-4 text-blue-400" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-4 pt-3 pb-[calc(6rem+env(safe-area-inset-bottom))] no-scrollbar">
+                {visibleProfessionals.length === 0 ? (
+                  <div className="text-center py-14 opacity-60">
+                    <MapPin className="w-12 h-12 mx-auto mb-4 text-slate-500" />
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+                      Move map to discover
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {visibleProfessionals.map((professional, index) => (
+                      <motion.button
+                        type="button"
+                        key={professional.id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300, delay: index * 0.03 }}
+                        onClick={() => handleProfessionalClick(professional)}
+                        className="text-left rounded-[2rem] border border-white/10 bg-white/5 p-2.5 flex flex-col gap-3 transition-all duration-300 hover:bg-white/10 active:scale-[0.98]"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="relative">
+                            {professional.profile_image ? (
+                              <img
+                                src={professional.profile_image}
+                                alt={professional.full_name}
+                                className="w-10 h-10 rounded-[2rem] object-cover border border-white/10 shadow-lg"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-[2rem] bg-blue-900/20 flex items-center justify-center border border-white/10">
+                                <span className="text-base font-black text-blue-400">
+                                  {professional.full_name.charAt(0)}
+                                </span>
+                              </div>
+                            )}
+                            <div
+                              className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-[#0f172a]"
+                              style={{ backgroundColor: getProfessionalColor(professional.id) }}
+                            />
+                          </div>
+                          {professional.rating && (
+                            <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-[2rem] border border-white/10">
+                              <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+                              <span className="text-[9px] font-black text-white">
+                                {professional.rating.toFixed(1)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <h3 className="text-[11px] font-black text-white leading-tight line-clamp-2">
+                            {professional.full_name}
+                          </h3>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            {professional.location.city}
+                          </p>
+                        </div>
+
+                        <div className="mt-auto flex items-center justify-between">
+                          <span className="text-[12px] font-black text-blue-400">
+                            ${professional.hourly_rate}
+                          </span>
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                            /hr
+                          </span>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </VaulDrawer.Content>
+        </VaulDrawer.Root>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -247,7 +436,17 @@ export default function Browse() {
                   onZoomToProfessional={zoomToProfessionalRef}
                   onShowAllReady={showAllRef}
                   selectedProfessional={selectedProfessionalForCard}
-                  onCloseCard={() => setSelectedProfessionalForCard(null)}
+                  onCloseCard={() => {
+                    setSelectedProfessionalForCard(null);
+                    if (showAllRef.current && showAllRef.current.resetView) {
+                      showAllRef.current.resetView();
+                      setIsShowAllMode(true);
+                      if (isMobile) {
+                        setActiveDrawerSnap(MOBILE_DRAWER_SNAP_POINTS[0]);
+                      }
+                    }
+                  }}
+                  onMarkerClick={handleMarkerSelect}
                   isShowAllMode={isShowAllMode}
                 />
               </div>
@@ -276,7 +475,7 @@ export default function Browse() {
               <div className="p-6 border-b border-white/10">
                 {/* Logo Section */}
                 <div className="flex items-center justify-between mb-6">
-                  <Link to={createPageUrl("Browse")} className="flex items-center group">
+                  <Link to="/" className="flex items-center group">
                     <img
                       src="/landing/assets/images/logos/Logo4.png"
                       alt="FitFindr Logo"
@@ -307,23 +506,7 @@ export default function Browse() {
                         Found
                       </span>
                     </div>
-                    {filteredProfessionals.length > 0 && (
-                      <Button
-                        onClick={() => {
-                          if (showAllRef.current) {
-                            showAllRef.current();
-                            setIsShowAllMode(true);
-                            setHoveredProfessional(null);
-                            setSelectedProfessionalForCard(null);
-                          }
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 px-4 rounded-xl text-xs font-bold bg-white/10 text-white hover:bg-white/20 transition-all"
-                      >
-                        Reset View
-                      </Button>
-                    )}
+                    {/* Reset button removed as X on card now handles it */}
                   </div>
                 </div>
               </div>
@@ -436,109 +619,8 @@ export default function Browse() {
             </div>
           </motion.div>
 
-          {/* Mobile: Bottom Sheet for Professionals - Enhanced */}
-          {isMobile && (
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: viewportBounds ? "0%" : "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 200 }}
-              className="md:hidden absolute bottom-0 left-0 right-0 z-[100] bg-slate-900/95 backdrop-blur-2xl shadow-2xl border-t border-white/10 rounded-t-[2.5rem] max-h-[70vh] flex flex-col"
-            >
-              {/* Drag Handle */}
-              <div className="flex justify-center pt-4 pb-2">
-                <div className="w-12 h-1.5 bg-white/20 rounded-full" />
-              </div>
 
-              {/* Header */}
-              <div className="px-8 pb-6 pt-2">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-2xl font-black text-white">Nearby Pros</h2>
-                    <p className="text-sm font-bold text-slate-400">{visibleProfessionals.length} found in this area</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                {filteredProfessionals.length > 0 && (
-                  <Button
-                    onClick={() => {
-                      if (showAllRef.current) {
-                        showAllRef.current();
-                        setIsShowAllMode(true);
-                      }
-                    }}
-                    variant="outline"
-                    className="w-full h-12 bg-white/5 border-white/10 text-white font-bold rounded-2xl hover:bg-white/10 transition-all"
-                  >
-                    Reset Map View
-                  </Button>
-                )}
-              </div>
-
-              {/* Scrollable List */}
-              <div className="flex-1 overflow-y-auto px-6 pb-8 space-y-4 custom-scrollbar">
-                {visibleProfessionals.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-slate-400 font-medium">
-                      Move the map to discover trainers
-                    </p>
-                  </div>
-                ) : (
-                  <AnimatePresence mode="popLayout">
-                    {visibleProfessionals.map((professional, index) => (
-                      <motion.div
-                        key={professional.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="relative"
-                      >
-                        <div
-                          className="bg-white/5 p-4 border border-white/5 rounded-2xl flex items-center gap-4 active:bg-white/10 transition-all"
-                          onClick={() => handleProfessionalClick(professional)}
-                        >
-                          {/* Avatar */}
-                          <div className="relative">
-                            {professional.profile_image ? (
-                              <img
-                                src={professional.profile_image}
-                                alt={professional.full_name}
-                                className="w-16 h-16 rounded-2xl object-cover border border-white/10"
-                              />
-                            ) : (
-                              <div className="w-16 h-16 rounded-2xl bg-blue-900/30 flex items-center justify-center border border-white/10">
-                                <span className="text-2xl font-black text-blue-400">
-                                  {professional.full_name.charAt(0)}
-                                </span>
-                              </div>
-                            )}
-                            <div
-                              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-[#0f172a]"
-                              style={{ backgroundColor: getProfessionalColor(professional.id) }}
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-bold text-white text-lg">{professional.full_name}</h3>
-                            <p className="text-sm font-medium text-slate-500">{professional.location.city}</p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1">
-                            <span className="text-lg font-black text-blue-400">${professional.hourly_rate}</span>
-                            {professional.rating && (
-                              <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                                <span className="text-xs font-black text-white">{professional.rating.toFixed(1)}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                )}
-              </div>
-            </motion.div>
-          )}
+          {renderMobileDrawer()}
 
           {/* Profile Drawer - Appears on hover next to grid items (only in show all mode) */}
           {!isMobile && hoveredProfessional && isShowAllMode && !selectedProfessionalForCard && (
@@ -550,64 +632,57 @@ export default function Browse() {
             />
           )}
 
-          {/* Floating Navigation - Top Center - Enhanced */}
-          <motion.header
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.2 }}
-            className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[100] w-auto"
-          >
-            <nav
-              className="flex items-center p-1.5 bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl"
-              aria-label="Tabs"
+          {renderFloatingHeader()}
+          {isMobile && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.2 }}
+              className="absolute top-6 left-6 z-[220]"
             >
-              {navigationItems.map((item, tabIdx) => {
-                const isActive = location.pathname === item.url;
-                return (
-                  <Link
-                    key={item.title}
-                    to={item.url}
-                    className={`
-                  relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2
-                  ${isActive ? 'text-white bg-blue-600 shadow-lg shadow-blue-600/30' : 'text-slate-400 hover:text-white hover:bg-white/5'}
-                `}
-                  >
-                    <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                    <span className="hidden md:inline">{item.title}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </motion.header>
-
-          {/* Floating Search Bar - Bottom Center */}
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.3 }}
-            className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-[100] w-[calc(100%-3rem)] md:w-auto md:min-w-[600px]"
-          >
-            <div className="bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)] border border-white/10 p-2 flex items-center gap-2 group">
-              <div className="flex-1 relative flex items-center px-4">
-                <Search className="w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
-                <Input
-                  placeholder="Search by name, city, or specialty..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-14 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white font-medium placeholder:text-slate-500 text-lg ml-0"
+              <div className="h-16 w-16 rounded-[2.25rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-2xl flex items-center justify-center">
+                <img
+                  src="/landing/assets/images/logos/Logo4.png"
+                  alt="FitFindr"
+                  className="h-9 w-auto object-contain"
                 />
               </div>
-              <div className="h-10 w-px bg-white/10 mx-2" />
-              <Button
-                onClick={() => setShowFilters(!showFilters)}
-                variant="ghost"
-                className="h-14 px-8 rounded-2xl bg-white/5 text-white font-bold hover:bg-white/10 flex items-center gap-3 transition-all border border-white/5"
-              >
-                <Filter className="w-5 h-5 text-blue-400" />
-                <span>Filters</span>
-              </Button>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
+
+
+          {/* Floating Search Bar - Bottom Center (Desktop) */}
+          {!isMobile && (
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.3 }}
+              className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-[100] w-[calc(100%-3rem)] md:w-auto md:min-w-[600px]"
+            >
+              <div className="bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)] border border-white/10 p-2 flex items-center gap-2 group">
+                <div className="flex-1 relative flex items-center px-4">
+                  <Search className="w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                  <Input
+                    placeholder="Search by name, city, or specialty..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-14 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white font-medium placeholder:text-slate-500 text-lg ml-0"
+                  />
+                </div>
+                <div className="h-10 w-px bg-white/10 mx-2" />
+                <Button
+                  onClick={() => setShowFilters(!showFilters)}
+                  variant="ghost"
+                  className="h-14 px-8 rounded-2xl bg-white/5 text-white font-bold hover:bg-white/10 flex items-center gap-3 transition-all border border-white/5"
+                >
+                  <Filter className="w-5 h-5 text-blue-400" />
+                  <span>Filters</span>
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Mobile Floating Action Search Button removed */}
 
 
           {/* Filters Overlay */}
@@ -620,7 +695,7 @@ export default function Browse() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowFilters(false)}
-                  className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[110]"
+                  className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[320]"
                 />
 
                 {/* Filters Panel - Centered */}
@@ -629,9 +704,9 @@ export default function Browse() {
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.95, opacity: 0, y: 20 }}
                   transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                  className={`fixed ${isMobile ? 'bottom-0 left-0 right-0 rounded-t-[3rem] p-0'
+                  className={`fixed ${isMobile ? 'bottom-0 left-0 right-0 rounded-t-[3rem] p-0 pb-[env(safe-area-inset-bottom)]'
                     : 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl'
-                    } z-[120]`}
+                    } z-[330]`}
                 >
                   <SearchFilters
                     filters={filters}
@@ -647,12 +722,8 @@ export default function Browse() {
         <div className="min-h-screen bg-slate-950 overflow-x-hidden">
           {/* Sticky Top Header for Grid View */}
           <header className="sticky top-0 z-[200] w-full bg-slate-900/50 backdrop-blur-xl border-b border-white/10 px-8 h-20 flex items-center justify-between">
-            <Link to={createPageUrl("Browse")} className="flex items-center gap-3 group">
-              <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-105" />
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-black text-white tracking-tight">FitFindr</h1>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest -mt-1">Find Professionals</p>
-              </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-110" />
             </Link>
 
             <nav className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10">

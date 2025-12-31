@@ -11,7 +11,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   minute: "2-digit",
 });
 
-const GamesMap = forwardRef(({ games = [], height = "28rem", onViewDetails, onMarkerClick, isShowAllMode }, ref) => {
+const GamesMap = forwardRef(({ games = [], height = "28rem", onViewDetails, onMarkerClick, onItemClick, isShowAllMode }, ref) => {
   const mapRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
@@ -158,7 +158,10 @@ const GamesMap = forwardRef(({ games = [], height = "28rem", onViewDetails, onMa
       renderPopup={renderPopup}
       height={height}
       markerColor="#22c55e"
-      onMarkerClick={onMarkerClick}
+      onMarkerClick={(marker) => {
+        if (onMarkerClick) onMarkerClick(marker.game);
+        if (onItemClick) onItemClick(marker.game);
+      }}
       isShowAllMode={isShowAllMode}
     />
   );

@@ -12,7 +12,7 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-export default function MapView({ professionals = [], onViewportChange, onZoomToProfessional, onShowAllReady, selectedProfessional: externalSelected, onCloseCard, isShowAllMode = false }) {
+export default function MapView({ professionals = [], onViewportChange, onZoomToProfessional, onShowAllReady, selectedProfessional: externalSelected, onCloseCard, isShowAllMode = false, onMarkerClick }) {
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/99b4f91f-a089-4227-b05d-f4392b5d7598', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MapView.jsx:14', message: 'MapView component mounted', data: { professionalsCount: professionals?.length || 0, timestamp: Date.now() }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' }) }).catch(() => { });
   // #endregion
@@ -116,10 +116,13 @@ export default function MapView({ professionals = [], onViewportChange, onZoomTo
     const professional = markerData.professional;
     if (professional) {
       setSelectedProfessional(professional);
+      if (onMarkerClick) {
+        onMarkerClick(professional);
+      }
     }
-  }, []);
+  }, [onMarkerClick]);
 
-  // Expose zoom function to parent
+  // Expose methods to parent
   useEffect(() => {
     if (onZoomToProfessional) {
       // Store map reference for external zoom calls
@@ -134,15 +137,31 @@ export default function MapView({ professionals = [], onViewportChange, onZoomTo
           setSelectedProfessional(professional);
         }
       };
+
+      // Also expose resetView via this same ref for consolidated map control
+      onZoomToProfessional.current.resetView = () => {
+        if (mapRef.current) {
+          mapRef.current.resetView();
+        }
+        setSelectedProfessional(null);
+      };
     }
   }, [onZoomToProfessional]);
 
-  // Expose showAll function to parent
+  // Expose showAll/resetView functions to parent (Legacy ref support)
   useEffect(() => {
     if (onShowAllReady && mapRef.current) {
-      onShowAllReady.current = () => {
-        if (mapRef.current && markers.length > 0) {
-          mapRef.current.showAll(markers);
+      onShowAllReady.current = {
+        showAll: () => {
+          if (mapRef.current && markers.length > 0) {
+            mapRef.current.showAll(markers);
+          }
+        },
+        resetView: () => {
+          if (mapRef.current) {
+            mapRef.current.resetView();
+            setSelectedProfessional(null);
+          }
         }
       };
     }
@@ -175,10 +194,17 @@ export default function MapView({ professionals = [], onViewportChange, onZoomTo
         <MapViewCard
           professional={activeProfessional}
           onClose={() => {
-            if (externalSelected && onCloseCard) {
+            // Priority 1: Clear local selection
+            setSelectedProfessional(null);
+
+            // Priority 2: Reset the map view
+            if (mapRef.current) {
+              mapRef.current.resetView();
+            }
+
+            // Priority 3: Inform parent (Browse.jsx) to sync its state
+            if (onCloseCard) {
               onCloseCard();
-            } else {
-              setSelectedProfessional(null);
             }
           }}
           initialExpanded={!!externalSelected}

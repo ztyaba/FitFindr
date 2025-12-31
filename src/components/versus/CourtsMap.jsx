@@ -4,7 +4,7 @@ import { DollarSign, MapPin, Star } from "lucide-react";
 import MapboxMap from "@/components/maps/MapboxMap";
 import { Badge } from "@/components/ui/badge";
 
-const CourtsMap = forwardRef(({ courts = [], height = "28rem", onViewDetails, onMarkerClick, isShowAllMode }, ref) => {
+const CourtsMap = forwardRef(({ courts = [], height = "28rem", onViewDetails, onMarkerClick, onItemClick, isShowAllMode }, ref) => {
   const mapRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
@@ -137,7 +137,10 @@ const CourtsMap = forwardRef(({ courts = [], height = "28rem", onViewDetails, on
       renderPopup={renderPopup}
       height={height}
       markerColor="#7c3aed"
-      onMarkerClick={onMarkerClick}
+      onMarkerClick={(marker) => {
+        if (onMarkerClick) onMarkerClick(marker.court);
+        if (onItemClick) onItemClick(marker.court);
+      }}
       isShowAllMode={isShowAllMode}
     />
   );

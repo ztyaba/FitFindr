@@ -40,6 +40,7 @@ import CourtDetailDialog from "../components/versus/CourtDetailDialog";
 import VersusMapCard from "../components/versus/VersusMapCard";
 import { Badge } from "@/components/ui/badge";
 import { useRef } from "react";
+import { Drawer as VaulDrawer } from "vaul";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
@@ -47,6 +48,8 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   hour: "numeric",
   minute: "2-digit",
 });
+
+const MOBILE_DRAWER_SNAP_POINTS = [0.22, 0.5, 0.9];
 
 export default function Versus() {
   const [games, setGames] = useState([]);
@@ -57,11 +60,13 @@ export default function Versus() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [activeTab, setActiveTab] = useState("games");
   const [gamesView, setGamesView] = useState("grid");
   const [courtsView, setCourtsView] = useState("grid");
   const [courtSearchQuery, setCourtSearchQuery] = useState("");
   const [layoutMode, setLayoutMode] = useState("map");
+  const [activeDrawerSnap, setActiveDrawerSnap] = useState(MOBILE_DRAWER_SNAP_POINTS[0]);
   const [filters, setFilters] = useState({
     sport: "",
     skill_level: "",
@@ -134,6 +139,93 @@ export default function Versus() {
     }
   };
 
+  const renderGamesList = (viewType = "list") => {
+    if (isLoading) {
+      return (
+        <div className={viewType === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-4"}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-48 bg-white/5 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      );
+    }
+
+    if (filteredGames.length === 0) {
+      return (
+        <div className="py-12 text-center opacity-40">
+          <Zap className="w-12 h-12 mx-auto mb-4 text-slate-500" />
+          <p className="text-sm font-bold uppercase tracking-widest text-white">No Matchups Discovered</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={viewType === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-4"}>
+        {filteredGames.map((game, index) => (
+          <div
+            key={game.id}
+            onMouseEnter={(e) => {
+              if (isMobile) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              setHoveredItem({
+                full_name: game.title,
+                location: game.location,
+                specialties: [game.sport],
+                price_per_hour: game.cost_per_person,
+                bio: game.description || "Exciting pickup game matchup!",
+                rating: 4.8
+              });
+              setDrawerPosition({ x: rect.right + 20, y: rect.top });
+            }}
+            onMouseLeave={() => setHoveredItem(null)}
+            onClick={() => handleItemClick(game)}
+            className="cursor-pointer"
+          >
+            <GameCard
+              game={game}
+              index={index}
+              onJoin={() => loadGames()}
+              variant={viewType === "list" ? "compact" : "default"}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderCourtsList = (variant = "default") => {
+    if (isLoading) {
+      return (
+        <div className="space-y-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-48 bg-white/5 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      );
+    }
+    return (
+      <CourtFinder
+        courts={filteredCourts}
+        variant={variant}
+        onHover={(court, rect) => {
+          if (isMobile) return;
+          setHoveredItem({
+            full_name: court.name,
+            location: court.location,
+            specialties: ["Venue", court.venue_type],
+            price_per_hour: court.rate_per_hour,
+            bio: "A premium athletic facility ready for your next matchup.",
+            rating: 4.9
+          });
+          setDrawerPosition({ x: rect.right + 20, y: rect.top });
+        }}
+        onHoverExit={() => setHoveredItem(null)}
+        onCourtClick={handleItemClick}
+      />
+    );
+  };
+
+
   const applyFilters = useCallback(() => {
     let filtered = Array.isArray(games) ? [...games] : [];
 
@@ -187,6 +279,12 @@ export default function Versus() {
   }, [applyFilters]);
 
   useEffect(() => {
+    if (isMobile && layoutMode !== "map") {
+      setLayoutMode("map");
+    }
+  }, [isMobile, layoutMode]);
+
+  useEffect(() => {
     if (activeTab !== "games") {
       setShowFilters(false);
     }
@@ -219,20 +317,27 @@ export default function Versus() {
       const mapRef = activeTab === "games" ? gamesMapRef : courtsMapRef;
       if (mapRef.current) {
         setIsShowAllMode(false);
+        setHoveredItem(null); // Clear hover preview
         mapRef.current.closeAllPopups();
         mapRef.current.zoomTo(item.location.latitude, item.location.longitude);
         // Set the selected item for the floating card
         setSelectedCardItem(item);
+        if (isMobile) {
+          setActiveDrawerSnap(MOBILE_DRAWER_SNAP_POINTS[0]);
+        }
       }
     } else {
       if (activeTab === "games") setSelectedGame(item);
       else setSelectedCourt(item);
     }
-  }, [isMapLayout, activeTab]);
+  }, [isMapLayout, activeTab, isMobile]);
 
   const handleResetView = useCallback(() => {
     setIsShowAllMode(true);
     setSelectedCardItem(null);
+    if (isMobile) {
+      setActiveDrawerSnap(MOBILE_DRAWER_SNAP_POINTS[0]);
+    }
     const mapRef = activeTab === "games" ? gamesMapRef : courtsMapRef;
     if (mapRef.current) {
       mapRef.current.closeAllPopups();
@@ -240,7 +345,7 @@ export default function Versus() {
         mapRef.current.resetView();
       }
     }
-  }, [activeTab]);
+  }, [activeTab, isMobile]);
 
   const handleGameCreated = () => {
     setShowCreateGame(false);
@@ -433,10 +538,185 @@ export default function Versus() {
     ));
   };
 
+  const renderFloatingHeader = () => (
+    <motion.header
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.2 }}
+      className="absolute top-6 left-1/2 -translate-x-1/2 z-[220] w-auto"
+    >
+      <nav
+        className="flex items-center gap-1 p-1.5 bg-slate-900/80 backdrop-blur-xl rounded-[2rem] border border-white/10 shadow-2xl"
+        aria-label="Primary"
+      >
+        {navigationItems.map((item) => {
+          const isActive = item.url.includes("Versus");
+          return (
+            <Link
+              key={item.title}
+              to={item.url}
+              aria-label={item.title}
+              className={`relative ${isMobile ? "px-3 py-2" : "px-5 py-2.5"} rounded-[2rem] text-[10px] md:text-sm font-black tracking-widest transition-all duration-300 flex items-center gap-2 ${isActive
+                ? "text-white bg-blue-600 shadow-lg shadow-blue-600/30"
+                : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+            >
+              <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+              <span className="sr-only">{item.title}</span>
+              <span className="hidden md:inline">{item.title}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </motion.header>
+  );
+
+
+
+  const renderMobileDrawer = () => {
+    if (!isMobile) return null;
+    const isLeaderboardTab = activeTab === "leaderboard";
+
+    // Get the count based on active tab
+    const getResultCount = () => {
+      if (activeTab === "games") return filteredGames.length;
+      if (activeTab === "courts") return filteredCourts.length;
+      return players.length;
+    };
+
+    const getResultLabel = () => {
+      if (activeTab === "games") return "Matchups";
+      if (activeTab === "courts") return "Venues";
+      return "Players";
+    };
+
+    return (
+      <div className="absolute inset-0 pointer-events-none z-[160]">
+        <VaulDrawer.Root
+          open
+          modal={false}
+          dismissible={false}
+          snapPoints={MOBILE_DRAWER_SNAP_POINTS}
+          activeSnapPoint={activeDrawerSnap}
+          setActiveSnapPoint={setActiveDrawerSnap}
+        >
+          <VaulDrawer.Content className="fixed bottom-0 left-0 right-0 max-h-[92vh] outline-none flex flex-col z-[190] pointer-events-auto">
+            <motion.div
+              initial={{ y: 120, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="flex-1 bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]"
+            >
+              <div className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 px-5 pt-2 pb-3">
+                <div className="flex items-center justify-center">
+                  <div className="drawer-handle shadow-sm" />
+                </div>
+
+                {/* Header - Browse Style: Title, Subtitle, Count */}
+                <div className="mt-3 relative flex items-center justify-center">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[11px] font-black text-white uppercase tracking-[0.2em]">
+                      Versus
+                    </p>
+                    <span className="text-slate-700 mx-1">•</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xl font-black text-blue-400">
+                        {getResultCount()}
+                      </span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        {getResultLabel()}
+                      </span>
+                    </div>
+                  </div>
+                  {activeTab === "games" && (
+                    <div className="absolute right-0">
+                      <Button
+                        onClick={() => setShowFilters(true)}
+                        variant="ghost"
+                        className="h-10 w-10 rounded-[2rem] bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                      >
+                        <SlidersHorizontal className="w-4 h-4 text-blue-400" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tabs - Styled to match Browse aesthetic */}
+                <div className="mt-3 bg-white/5 border border-white/10 rounded-[2rem] p-1.5">
+                  <TabsList className="bg-transparent border-0 gap-1 h-auto p-0 w-full justify-start">
+                    <TabsTrigger
+                      value="games"
+                      className="flex-1 rounded-[2rem] px-3 h-9 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400 font-black uppercase text-[10px] tracking-widest transition-all"
+                    >
+                      Games
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="courts"
+                      className="flex-1 rounded-[2rem] px-3 h-9 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400 font-black uppercase text-[10px] tracking-widest transition-all"
+                    >
+                      Courts
+                    </TabsTrigger>
+                    <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
+                    <TabsTrigger
+                      value="leaderboard"
+                      onClick={(e) => {
+                        if (isMobile) {
+                          e.preventDefault();
+                          setShowLeaderboard(true);
+                        }
+                      }}
+                      className="flex-1 rounded-[2rem] px-3 h-9 data-[state=active]:bg-yellow-500 data-[state=active]:text-black text-slate-400 font-black uppercase text-[10px] tracking-widest transition-all"
+                    >
+                      Ranks
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                {/* Search - Only for Games/Courts */}
+                {!isLeaderboardTab && (
+                  <div className="mt-3 flex items-center gap-2 bg-white/5 border border-white/10 rounded-[2rem] p-1.5">
+                    <div className="relative flex-1 group">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                      <Input
+                        placeholder={activeTab === "games" ? "Search games..." : "Search courts..."}
+                        value={activeTab === "games" ? searchQuery : courtSearchQuery}
+                        onChange={(e) => {
+                          if (activeTab === "games") {
+                            setSearchQuery(e.target.value);
+                          } else {
+                            setCourtSearchQuery(e.target.value);
+                          }
+                        }}
+                        className="h-11 pl-11 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white placeholder:text-slate-500 transition-all font-medium text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-4 pt-3 pb-[calc(6rem+env(safe-area-inset-bottom))] no-scrollbar">
+                <TabsContent value="games" className="m-0 focus-visible:ring-0">
+                  {renderGamesList("compact")}
+                </TabsContent>
+                <TabsContent value="courts" className="m-0 focus-visible:ring-0">
+                  {renderCourtsList("compact")}
+                </TabsContent>
+                <TabsContent value="leaderboard" className="m-0 focus-visible:ring-0">
+                  <Leaderboard players={players} tone="dark" />
+                </TabsContent>
+              </div>
+            </motion.div>
+          </VaulDrawer.Content>
+        </VaulDrawer.Root>
+      </div>
+    );
+  };
+
+
   return (
     <div className={isMapLayout ? "fixed inset-0 w-screen h-screen overflow-hidden" : "min-h-screen bg-slate-950 text-white"}>
       {isMapLayout ? (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <div className="absolute inset-0">
             {activeTab === "courts" ? (
               <CourtsMap
@@ -445,6 +725,7 @@ export default function Versus() {
                 height="100%"
                 onViewDetails={handleViewDetails}
                 onMarkerClick={handleMarkerClick}
+                onItemClick={handleItemClick}
                 isShowAllMode={isShowAllMode}
               />
             ) : (
@@ -454,25 +735,12 @@ export default function Versus() {
                 height="100%"
                 onViewDetails={handleViewDetails}
                 onMarkerClick={handleMarkerClick}
+                onItemClick={handleItemClick}
                 isShowAllMode={isShowAllMode}
               />
             )}
 
-            {!isShowAllMode && !selectedCardItem && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100]"
-              >
-                <Button
-                  onClick={handleResetView}
-                  className="bg-slate-900/90 hover:bg-slate-800 text-white border border-white/10 rounded-full px-8 py-6 h-auto font-black uppercase tracking-[0.2em] shadow-2xl backdrop-blur-xl"
-                >
-                  <MapPin className="w-5 h-5 mr-3" />
-                  Reset Map View
-                </Button>
-              </motion.div>
-            )}
+            {/* Reset View Button removed as X on card now handles it */}
 
             {/* Floating Map Card - Shows when item is selected */}
             <AnimatePresence>
@@ -498,38 +766,30 @@ export default function Versus() {
 
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-900/30 to-slate-950/80 pointer-events-none" />
 
-          {/* Floating Navigation Header - Matching Browse */}
-          <motion.header
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.2 }}
-            className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[200] w-auto"
-          >
-            <nav
-              className="flex items-center p-1.5 bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl"
-              aria-label="Tabs"
+          {renderFloatingHeader()}
+
+          {/* Mobile Logo Badge - Top Left */}
+          {isMobile && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.2 }}
+              className="absolute top-6 left-6 z-[220]"
             >
-              {navigationItems.map((item) => {
-                const isActive = item.url.includes("Versus");
-                return (
-                  <Link
-                    key={item.title}
-                    to={item.url}
-                    className={`
-                      relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2
-                      ${isActive ? 'text-white bg-blue-600 shadow-lg shadow-blue-600/30' : 'text-slate-400 hover:text-white hover:bg-white/5'}
-                    `}
-                  >
-                    <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                    <span className="hidden md:inline">{item.title}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </motion.header>
+              <Link to="/" className="h-16 w-16 rounded-[2.25rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-2xl flex items-center justify-center transition-transform active:scale-95">
+                <img
+                  src="/landing/assets/images/logos/Logo4.png"
+                  alt="FitFindr"
+                  className="h-9 w-auto object-contain"
+                />
+              </Link>
+            </motion.div>
+          )}
+
+
 
           <AnimatePresence>
-            {activeTab !== "leaderboard" && (
+            {!isMobile && activeTab !== "leaderboard" && (
               <motion.aside
                 initial={{ x: -400, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -538,12 +798,11 @@ export default function Versus() {
                 className="absolute left-6 top-6 bottom-6 w-[min(480px,95vw)] z-[110]"
               >
                 <div className="h-full flex flex-col rounded-[2.5rem] bg-slate-900/85 backdrop-blur-[32px] border border-white/10 shadow-[0_32px_64px_-20px_rgba(0,0,0,0.6)] overflow-hidden">
-                  {/* Panel Header */}
                   <div className="p-8 border-b border-white/10">
                     <div className="flex items-center justify-between mb-8">
-                      <div className="h-12 w-auto flex items-center">
-                        <img src="/landing/assets/images/logos/Logo4.png" alt="Logo" className="h-12 w-auto object-contain" />
-                      </div>
+                      <Link to="/" className="h-12 w-auto flex items-center group">
+                        <img src="/landing/assets/images/logos/Logo4.png" alt="Logo" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" />
+                      </Link>
                       <Button
                         onClick={() => setLayoutMode("grid")}
                         size="sm"
@@ -599,12 +858,10 @@ export default function Versus() {
                     </div>
                   </div>
 
-                  {/* Scrollable Content */}
                   <div className="flex-1 overflow-y-auto professional-panel-scroll p-6 space-y-4">
-                    {activeTab === "games" ? renderGameList() : renderCourtList()}
+                    {activeTab === "games" ? renderGamesList("compact") : renderCourtsList("compact")}
                   </div>
 
-                  {/* Quick Action Bottom Bar */}
                   {activeTab === "games" && (
                     <div className="p-6 bg-white/5 border-t border-white/5">
                       <Button
@@ -619,9 +876,11 @@ export default function Versus() {
                 </div>
               </motion.aside>
             )}
+
+            {renderMobileDrawer()}
           </AnimatePresence>
 
-          {activeTab === "leaderboard" && (
+          {activeTab === "leaderboard" && !isMobile && (
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -642,38 +901,61 @@ export default function Versus() {
             </motion.div>
           )}
 
-          {/* Profile Drawer Component for Hover Previews */}
+          {/* Dialogs and Overlays for Map Mode */}
           <ProfileDrawer
             professional={hoveredItem}
-            isOpen={!!hoveredItem}
+            isOpen={!!hoveredItem && !isMobile}
             onClose={() => setHoveredItem(null)}
             position={drawerPosition}
           />
 
           <AnimatePresence>
-            {showFilters && activeTab === "games" && (
-              <>
+            {showLeaderboard && isMobile && (
+              <div className="fixed inset-0 z-[400] bg-slate-950 flex flex-col">
+                <div className="flex items-center justify-between p-6 border-b border-white/10 bg-slate-900/50 backdrop-blur-xl">
+                  <div>
+                    <h3 className="text-2xl font-black text-white tracking-tight">HALL OF FAME</h3>
+                    <p className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.2em] mt-0.5">Top Performer Ranks</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setShowLeaderboard(false);
+                      setActiveTab("games");
+                    }}
+                    className="w-12 h-12 rounded-2xl bg-white/5 border border-white/5 text-slate-400 hover:text-white transition-all shadow-xl"
+                  >
+                    <X className="w-6 h-6" />
+                  </Button>
+                </div>
+                <div className="flex-1 overflow-y-auto glass-scrollbar p-4 safe-bottom">
+                  <div className="max-w-2xl mx-auto">
+                    <Leaderboard players={players} tone="dark" isMobileView={true} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {showFilters && (
+              <div className="fixed inset-0 z-[300] flex items-center justify-center sm:p-4">
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowFilters(false)}
-                  className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[130]"
+                  className="absolute inset-0 bg-slate-950/80 backdrop-blur-md z-[300]"
                 />
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                  className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(1000px,92vw)] z-[140]"
-                >
+                <div className="relative w-full h-full sm:h-auto sm:max-w-5xl max-h-screen sm:max-h-[90vh] overflow-y-auto glass-scrollbar sm:rounded-[3rem] z-[310]">
                   <GameFilters
                     filters={filters}
                     setFilters={setFilters}
                     onClose={() => setShowFilters(false)}
                   />
-                </motion.div>
-              </>
+                </div>
+              </div>
             )}
           </AnimatePresence>
         </Tabs>
@@ -681,12 +963,8 @@ export default function Versus() {
         <div className="min-h-screen bg-slate-950 overflow-x-hidden">
           {/* Sticky Top Header for Grid View */}
           <header className="sticky top-0 z-[200] w-full bg-slate-900/50 backdrop-blur-xl border-b border-white/10 px-8 h-20 flex items-center justify-between">
-            <Link to={createPageUrl("Browse")} className="flex items-center gap-3 group">
-              <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-105" />
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-black text-white tracking-tight">FitFindr</h1>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest -mt-1">Versus Mode</p>
-              </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-110" />
             </Link>
 
             <nav className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10">
@@ -841,52 +1119,8 @@ export default function Versus() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
-                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                     >
-                      {isLoading ? (
-                        Array.from({ length: 6 }).map((_, i) => (
-                          <div key={i} className="h-[400px] bg-white/5 rounded-[2.5rem] animate-pulse" />
-                        ))
-                      ) : filteredGames.length === 0 ? (
-                        <div className="col-span-full py-32 text-center bg-white/5 rounded-[3rem] border border-dashed border-white/10">
-                          <Zap className="w-16 h-16 text-slate-700 mx-auto mb-6" />
-                          <h3 className="text-2xl font-black text-white mb-2">No Matchups Discovered</h3>
-                          <p className="text-slate-400 mb-8 max-w-sm mx-auto">Create the first local challenge or try adjusting your search parameters.</p>
-                          <Button
-                            onClick={() => setShowCreateGame(true)}
-                            className="bg-blue-600 hover:bg-blue-500 px-8 rounded-xl h-12 font-black uppercase tracking-widest text-xs"
-                          >
-                            Start a Matchup
-                          </Button>
-                        </div>
-                      ) : (
-                        filteredGames.map((game, index) => (
-                          <div
-                            key={game.id}
-                            onMouseEnter={(e) => {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              setHoveredItem({
-                                full_name: game.title,
-                                location: game.location,
-                                specialties: [game.sport],
-                                price_per_hour: game.cost_per_person,
-                                bio: game.description || "Exciting pickup game matchup!",
-                                rating: 4.8
-                              });
-                              setDrawerPosition({ x: rect.right + 20, y: rect.top });
-                            }}
-                            onMouseLeave={() => setHoveredItem(null)}
-                            onClick={() => setSelectedGame(game)}
-                            className="cursor-pointer"
-                          >
-                            <GameCard
-                              game={game}
-                              index={index}
-                              onJoin={() => loadGames()}
-                            />
-                          </div>
-                        ))
-                      )}
+                      {renderGamesList("grid")}
                     </motion.div>
                   </TabsContent>
 
@@ -896,22 +1130,7 @@ export default function Versus() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                     >
-                      <CourtFinder
-                        courts={filteredCourts}
-                        onHover={(court, rect) => {
-                          setHoveredItem({
-                            full_name: court.name,
-                            location: court.location,
-                            specialties: ["Venue", court.venue_type],
-                            price_per_hour: court.rate_per_hour,
-                            bio: "A premium athletic facility ready for your next matchup.",
-                            rating: 4.9
-                          });
-                          setDrawerPosition({ x: rect.right + 20, y: rect.top });
-                        }}
-                        onHoverExit={() => setHoveredItem(null)}
-                        onCourtClick={(court) => setSelectedCourt(court)}
-                      />
+                      {renderCourtsList()}
                     </motion.div>
                   </TabsContent>
 
@@ -932,6 +1151,7 @@ export default function Versus() {
         </div>
       )}
 
+      {/* Shared Dialogs (Always mounted for state persistence) */}
       <CreateGameDialog
         open={showCreateGame}
         onClose={() => setShowCreateGame(false)}

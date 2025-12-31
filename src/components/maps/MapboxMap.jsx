@@ -119,19 +119,41 @@ const MapboxMap = forwardRef(({
       });
     },
     resetView: () => {
-      if (mapRef.current && markers && markers.length > 0) {
-        const bounds = new mapboxgl.LngLatBounds();
-        markers.forEach(marker => {
-          bounds.extend([marker.longitude, marker.latitude]);
-        });
-        mapRef.current.fitBounds(bounds, {
-          padding: 100,
-          maxZoom: 5,
+      if (mapRef.current) {
+        // If we have markers, fit the view to show all of them
+        if (markers && markers.length > 0) {
+          const bounds = new mapboxgl.LngLatBounds();
+          let hasValidCoords = false;
+          markers.forEach(marker => {
+            if (typeof marker.longitude === "number" && typeof marker.latitude === "number") {
+              bounds.extend([marker.longitude, marker.latitude]);
+              hasValidCoords = true;
+            }
+          });
+
+          if (hasValidCoords) {
+            mapRef.current.fitBounds(bounds, {
+              padding: 100,
+              maxZoom: 5,
+              pitch: 0,
+              bearing: 0,
+              duration: 1000
+            });
+            return;
+          }
+        }
+
+        // Fallback to default center if no markers
+        mapRef.current.easeTo({
+          center: DEFAULT_MAP_CENTER,
+          zoom: DEFAULT_MAP_ZOOM,
+          pitch: 0,
+          bearing: 0,
           duration: 1000
         });
       }
     }
-  }));
+  }), [markers]);
 
   useEffect(() => {
     // #region agent log
