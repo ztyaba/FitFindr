@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { FitnessProfessional } from "@/api/entities";
-import { MapPin, Filter, Grid, Search, X, Users, Zap, Calendar, Star, Sparkles } from "lucide-react";
+import { MapPin, Filter, Grid, Search, X, Users, Zap, Calendar, Star, Sparkles, SlidersHorizontal, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { getProfessionalColor } from "@/lib/utils";
 
@@ -42,6 +42,7 @@ export default function Browse() {
   });
 
   const location = useLocation();
+  const navigate = useNavigate();
   const gridCardRefs = useRef({});
   const scrollContainerRef = useRef(null);
   const zoomToProfessionalRef = useRef(null);
@@ -74,6 +75,13 @@ export default function Browse() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Reset drawer to starting position on mount
+  useEffect(() => {
+    if (isMobile) {
+      setActiveDrawerSnap(MOBILE_DRAWER_SNAP_POINTS[0]);
+    }
+  }, [isMobile]);
 
   // Navigation items for header
   const navigationItems = [
@@ -297,7 +305,7 @@ export default function Browse() {
                   <div className="drawer-handle shadow-sm" />
                 </div>
 
-                <div className="mt-2 relative flex items-center justify-center">
+                <div className="mt-3 relative flex items-center justify-center">
                   <div className="flex items-center gap-2">
                     <p className="text-[11px] font-black text-white uppercase tracking-[0.2em]">
                       Find a Pro
@@ -405,8 +413,8 @@ export default function Browse() {
 
   return (
     <div
-      className={`${isMapLayout ? "fixed inset-0 w-screen h-screen overflow-hidden" : "min-h-screen bg-slate-950 text-white"}`}
-      style={{
+      className={`${isMapLayout ? "fixed inset-0 w-screen h-screen overflow-hidden" : "min-h-screen bg-slate-950 text-white relative"}`}
+      style={isMapLayout ? {
         position: 'fixed',
         top: 0,
         left: 0,
@@ -414,11 +422,11 @@ export default function Browse() {
         bottom: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: '#0f172a', // Dark background while map loads
+        backgroundColor: '#0f172a',
         zIndex: 9999,
         visibility: 'visible',
         display: 'block'
-      }}
+      } : {}}
     >
       {isMapLayout ? (
         <>
@@ -685,103 +693,127 @@ export default function Browse() {
           {/* Mobile Floating Action Search Button removed */}
 
 
-          {/* Filters Overlay */}
-          <AnimatePresence>
-            {showFilters && (
-              <>
-                {/* Backdrop */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setShowFilters(false)}
-                  className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[320]"
-                />
-
-                {/* Filters Panel - Centered */}
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                  className={`fixed ${isMobile ? 'bottom-0 left-0 right-0 rounded-t-[3rem] p-0 pb-[env(safe-area-inset-bottom)]'
-                    : 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl'
-                    } z-[330]`}
-                >
-                  <SearchFilters
-                    filters={filters}
-                    setFilters={setFilters}
-                    onClose={() => setShowFilters(false)}
-                  />
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
         </>
       ) : (
         <div className="min-h-screen bg-slate-950 overflow-x-hidden">
           {/* Sticky Top Header for Grid View */}
-          <header className="sticky top-0 z-[200] w-full bg-slate-900/50 backdrop-blur-xl border-b border-white/10 px-8 h-20 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 group">
-              <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-110" />
-            </Link>
+          <header className="sticky top-0 z-[200] w-full bg-slate-900/50 backdrop-blur-xl border-b border-white/10 px-8 h-20 flex items-center">
+            <div className="flex-1">
+              <Link to="/" className="flex items-center gap-3 group">
+                <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-110" />
+              </Link>
+            </div>
 
-            <nav className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10">
-              {navigationItems.map((item) => {
-                const isActive = item.url.includes("Browse");
-                return (
-                  <Link key={item.title} to={item.url}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-11 px-6 rounded-xl flex items-center gap-2 transition-all duration-300 ${isActive
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                        }`}
-                    >
-                      <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
-                      <span className="text-sm font-bold">{item.title}</span>
-                    </Button>
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className="flex items-center gap-4">
+            <div className="flex-1 flex justify-center">
               <Button
                 onClick={() => setLayoutMode("map")}
                 variant="outline"
-                className="h-11 px-6 rounded-xl bg-white/5 border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/10 flex items-center gap-2"
+                className="h-11 px-8 rounded-xl bg-white/5 border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/10 flex items-center gap-2 transition-all active:scale-95"
               >
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Map View
+                <MapIcon className="w-4 h-4 text-emerald-400" />
+                View Map
               </Button>
+            </div>
+
+            <div className="flex-1 flex justify-end">
+              <nav className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10">
+                {navigationItems.map((item) => {
+                  const isActive = item.url.includes("Browse");
+                  return (
+                    <Link key={item.title} to={item.url}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-11 px-6 rounded-xl flex items-center gap-2 transition-all duration-300 ${isActive
+                          ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                          }`}
+                      >
+                        <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                        <span className="text-xs font-black uppercase tracking-widest">{item.title}</span>
+                      </Button>
+                    </Link>
+                  );
+                })}
+              </nav>
             </div>
           </header>
 
-          <main className="max-w-7xl mx-auto px-8 py-12 pb-32">
-            <div className="flex items-center justify-between mb-12">
-              <div>
-                <h2 className="text-4xl font-black text-white tracking-tight mb-2">Expert Professionals</h2>
-                <p className="text-slate-400 font-medium">Discover top-tier trainers and athletes in your area.</p>
-              </div>
-              <div className="flex gap-4">
-                <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+          <section className="relative min-h-[70vh] flex flex-col items-center justify-center pt-20">
+            <div className="absolute inset-0 z-0 overflow-hidden">
+              {/* Use a background style similar to Versus */}
+              <div className="absolute inset-0 bg-slate-950/40 via-transparent to-slate-950 z-10" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.2),_transparent_60%)] opacity-50" />
+            </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto px-6 text-center pt-20">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8"
+              >
+                <Sparkles className="w-4 h-4" />
+                Elite Training Network
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-6xl md:text-8xl font-black mb-8 text-white tracking-tighter"
+              >
+                FitFindr
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]">
+                  Browse
+                </span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-medium leading-relaxed"
+              >
+                Discover vetted trainers, coaches, and athletes tailored to your goals.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="flex flex-wrap items-center justify-center gap-4"
+              >
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setLayoutMode("map")}
+                  className="h-16 px-10 bg-white/5 border-white/10 hover:bg-white/10 text-white font-black uppercase tracking-widest text-sm rounded-[2rem] backdrop-blur-md active:scale-95 transition-all mx-auto"
+                >
+                  <MapPin className="w-5 h-5 mr-3 text-emerald-400" />
+                  View Map
+                </Button>
+              </motion.div>
+            </div>
+          </section>
+
+          <section className="max-w-7xl mx-auto px-6 py-20 pb-32">
+            <div className="flex flex-col lg:flex-row justify-end items-start lg:items-center gap-8 mb-16">
+
+              <div className="flex w-full lg:w-auto gap-3">
+                <div className="relative flex-1 min-w-[320px] group">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
                   <Input
-                    placeholder="Search professionals..."
+                    placeholder="Search name, city, specialty..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-12 w-64 pl-11 bg-white/5 border-white/10 rounded-2xl text-white placeholder:text-slate-500 focus:border-blue-500/50 transition-all font-medium"
+                    className="h-16 pl-14 bg-white/5 border-white/10 rounded-[2rem] text-white placeholder:text-slate-500 focus:border-blue-500/50 transition-all font-medium"
                   />
                 </div>
                 <Button
                   onClick={() => setShowFilters(true)}
                   variant="outline"
-                  className="h-12 px-6 rounded-2xl bg-white/5 border-white/10 text-white font-bold hover:bg-white/10 flex items-center gap-3 transition-all"
+                  className="h-16 w-16 rounded-[2rem] bg-white/5 border-white/10 text-white hover:bg-white/10"
                 >
-                  <Filter className="w-4 h-4 text-blue-400" />
-                  Filters
+                  <SlidersHorizontal className="w-6 h-6 text-blue-400" />
                 </Button>
               </div>
             </div>
@@ -856,11 +888,11 @@ export default function Browse() {
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedProfessionalForCard(professional);
+                            navigate(createPageUrl(`ProfessionalProfile?id=${professional.id}`));
                           }}
-                          className="rounded-xl bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:border-blue-500 transition-all"
+                          className="rounded-xl bg-blue-600 border border-blue-500 text-white font-black uppercase text-[10px] tracking-widest hover:bg-blue-500 transition-all"
                         >
-                          View Profile
+                          Book Now
                         </Button>
                       </div>
                     </div>
@@ -868,15 +900,56 @@ export default function Browse() {
                 ))}
               </div>
             )}
-          </main>
+          </section>
         </div>
       )}
 
       {/* Profile Drawer Component */}
       <ProfileDrawer
         professional={selectedProfessionalForCard}
-        onClose={() => setSelectedProfessionalForCard(null)}
+        onClose={() => {
+          setSelectedProfessionalForCard(null);
+          if (isMobile) {
+            setActiveDrawerSnap(MOBILE_DRAWER_SNAP_POINTS[0]);
+          }
+        }}
       />
+
+      {/* Filters Overlay - Global */}
+      <AnimatePresence>
+        {showFilters && (
+          <div className="fixed inset-0 z-[500] flex items-center justify-center">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFilters(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
+
+            {/* Filters Panel */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className={`relative z-[510] w-full ${isMobile
+                ? 'h-full flex flex-col justify-end'
+                : 'max-w-4xl p-4'
+                }`}
+            >
+              <div className={`${isMobile ? 'bg-slate-900 rounded-t-[3rem] pb-[env(safe-area-inset-bottom)]' : ''}`}>
+                <SearchFilters
+                  filters={filters}
+                  setFilters={setFilters}
+                  onClose={() => setShowFilters(false)}
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

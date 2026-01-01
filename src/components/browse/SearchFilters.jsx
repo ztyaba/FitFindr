@@ -74,7 +74,7 @@ export default function SearchFilters({ filters, setFilters, onClose }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 max-h-[60vh] overflow-y-auto pr-2 glass-scrollbar">
           {/* Specialties */}
           <div className="space-y-4">
             <Label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
@@ -155,8 +155,8 @@ export default function SearchFilters({ filters, setFilters, onClose }) {
                 <div
                   key={rating}
                   className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${filters.rating === rating
-                      ? 'bg-blue-600/10 border-blue-500'
-                      : 'bg-white/5 border-white/5 hover:border-white/10'
+                    ? 'bg-blue-600/10 border-blue-500'
+                    : 'bg-white/5 border-white/5 hover:border-white/10'
                     }`}
                   onClick={() => setFilters(prev => ({ ...prev, rating: prev.rating === rating ? 0 : rating }))}
                 >

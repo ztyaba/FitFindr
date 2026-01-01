@@ -121,7 +121,7 @@ export default function ProfessionalCard({ professional, index }) {
             <div className="mt-auto flex items-center justify-between gap-4">
               <Link to={profileUrl} className="flex-1">
                 <Button className="w-full h-11 bg-white/[0.03] hover:bg-white/[0.08] text-white border border-white/10 hover:border-white/20 rounded-xl font-bold transition-all text-sm group-hover:bg-blue-600 group-hover:border-blue-500">
-                  View Profile
+                  Book Now
                 </Button>
               </Link>
             </div>

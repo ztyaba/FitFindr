@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 import JSZip from "jszip";
-import { Sparkles, Camera, Video, Loader2, RefreshCcw, Download } from "lucide-react";
+import { Sparkles, Camera, Video, Loader2, RefreshCcw, Download, Play, Square, Send, Dumbbell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExerciseSelectorModal from "@/components/fitfindr/ExerciseSelectorModal";
 import exercises from "@/data/exercises.json";
@@ -142,7 +142,7 @@ export default function FitFindrAI() {
   const isRecordingRef = useRef(false);
 
   const [showIntro, setShowIntro] = useState(true);
-  const [facingMode, setFacingMode] = useState("environment");
+  const [facingMode, setFacingMode] = useState("user");
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -157,6 +157,18 @@ export default function FitFindrAI() {
   const [downloadError, setDownloadError] = useState("");
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [exerciseSelection, setExerciseSelection] = useState(null);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768
+  );
+
+  // Handle resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const stopStream = ({ shouldSaveRecording = true, shouldUpdateState = true } = {}) => {
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
@@ -522,24 +534,31 @@ export default function FitFindrAI() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {showIntro && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm px-6">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-6 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/20">
-                <Sparkles className="h-5 w-5 text-blue-300" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl px-6">
+          <div className="w-full max-w-md rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl p-8 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-blue-500/20 border border-blue-500/30">
+                <Sparkles className="h-7 w-7 text-blue-400" />
               </div>
-              <div>
-                <h2 className="text-xl font-black">Welcome to Fitfindr AI</h2>
-                <p className="mt-2 text-sm text-slate-300">
-                  Analyze your form using real-time motion capture and AI-powered movement analysis. All
-                  tracking and processing happens securely on your device—nothing is stored or saved.
-                </p>
-                <p className="mt-2 text-sm text-slate-300">Enable camera access to get started.</p>
+              <div className="flex-1">
+                <h2 className="text-2xl font-black tracking-tight">FitFindr AI</h2>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400">Form Analysis</p>
               </div>
             </div>
-            <div className="mt-6">
-              <Button className="w-full" onClick={handleContinue}>
-                continue
+            <div className="mt-6 space-y-3">
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Analyze your form using real-time motion capture and AI-powered movement analysis.
+              </p>
+              <p className="text-xs text-slate-500">
+                All tracking happens on-device. Nothing is stored or saved.
+              </p>
+            </div>
+            <div className="mt-8">
+              <Button
+                className="w-full h-14 rounded-[2rem] bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-sm tracking-widest transition-all active:scale-[0.98]"
+                onClick={handleContinue}
+              >
+                Enable Camera
               </Button>
             </div>
           </div>
@@ -557,9 +576,9 @@ export default function FitFindrAI() {
         initialSelection={exerciseSelection}
       />
 
-      <div className="flex min-h-screen flex-col">
-        <div className="bg-slate-950 px-4 pb-6 pt-6">
-          <div className="relative mx-auto h-[52vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-slate-950 sm:h-[58vh] lg:h-[62vh]">
+      <div className="flex min-h-screen flex-col overflow-hidden">
+        <div className={`bg-slate-950 ${isMobile ? 'px-0 pb-0 pt-0' : 'px-4 pb-6 pt-6'}`}>
+          <div className={`relative mx-auto w-full overflow-hidden border border-white/10 bg-slate-950 ${isMobile ? 'h-[55vh] rounded-none' : 'h-[52vh] max-w-5xl rounded-[2.5rem] sm:h-[58vh] lg:h-[62vh]'}`}>
             <video
               ref={videoRef}
               className="h-full w-full object-cover"
@@ -581,31 +600,36 @@ export default function FitFindrAI() {
             )}
 
             <div className="absolute inset-x-0 top-4 flex flex-wrap items-center justify-between gap-3 px-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-300">
+              <div className="inline-flex items-center gap-2 rounded-[2rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl px-4 py-2.5 text-xs font-bold uppercase tracking-[0.2em] text-white shadow-lg">
                 <Sparkles className="h-4 w-4 text-blue-400" />
                 FitFindr AI
               </div>
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  variant="secondary"
                   onClick={handleSwitchCamera}
                   disabled={!isCameraOn || isStarting}
+                  className="h-10 px-4 rounded-[2rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
                 >
-                  <RefreshCcw className="h-4 w-4" />
-                  Switch Camera
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Switch
                 </Button>
-                <Button size="sm" variant="outline" onClick={stopCamera} disabled={!isCameraOn}>
-                  Stop Camera
+                <Button
+                  size="sm"
+                  onClick={stopCamera}
+                  disabled={!isCameraOn}
+                  className="h-10 px-4 rounded-[2rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                >
+                  Off
                 </Button>
               </div>
             </div>
 
-            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 text-xs">
+            {/* Status badges - hide on mobile */}
+            <div className="absolute bottom-4 left-4 hidden md:flex flex-wrap gap-2 text-xs">
               <span
-                className={`rounded-full border border-white/10 px-3 py-1 font-bold ${
-                  isCameraOn ? "bg-emerald-500/20 text-emerald-200" : "bg-white/5 text-slate-400"
-                }`}
+                className={`rounded-full border border-white/10 px-3 py-1 font-bold ${isCameraOn ? "bg-emerald-500/20 text-emerald-200" : "bg-white/5 text-slate-400"
+                  }`}
               >
                 {isCameraOn ? "Camera On" : "Camera Off"}
               </span>
@@ -619,11 +643,47 @@ export default function FitFindrAI() {
                 {facingMode === "environment" ? "Back Camera" : "Front Camera"}
               </span>
             </div>
+
+            {/* Mobile Recording Controls - Floating bottom-left */}
+            {isMobile && isCameraOn && (
+              <div className="absolute bottom-4 left-4 flex items-center gap-1.5">
+                <button
+                  onClick={startRecording}
+                  disabled={!isCameraOn || isRecording}
+                  className={`h-9 px-3 rounded-full backdrop-blur-md font-bold text-[10px] uppercase tracking-wider transition-all flex items-center ${isRecording
+                    ? "bg-white/10 text-slate-500"
+                    : "bg-rose-500/30 text-rose-200 active:bg-rose-500/50"
+                    }`}
+                >
+                  <div className={`h-2 w-2 rounded-full mr-1.5 ${isRecording ? "bg-slate-500" : "bg-rose-400 animate-pulse"}`} />
+                  {isRecording ? "Rec..." : "Rec"}
+                </button>
+                <button
+                  onClick={stopRecording}
+                  disabled={!isRecording}
+                  className={`h-9 w-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${isRecording
+                    ? "bg-white/20 text-white active:bg-white/30"
+                    : "bg-white/10 text-slate-500"
+                    }`}
+                >
+                  <Square className="h-3 w-3" />
+                </button>
+                {recordedUrl && !isRecording && (
+                  <a
+                    className="h-9 w-9 rounded-full bg-emerald-500/30 backdrop-blur-md text-emerald-200 flex items-center justify-center"
+                    href={recordedUrl}
+                    download={`fitfindr-ai-recording.${recordedType.includes("mp4") ? "mp4" : "webm"}`}
+                  >
+                    <Download className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="border-t border-white/10 bg-slate-900/80">
-          <div className="mx-auto w-full max-w-6xl px-4 py-6">
+        <div className={`border-t border-white/10 bg-slate-900/80 ${isMobile ? 'flex-1 border-t-0 p-0' : ''}`}>
+          <div className={`mx-auto w-full max-w-6xl ${isMobile ? 'px-2 py-0' : 'px-4 py-6'}`}>
             {errorMessage && (
               <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs text-rose-200">
                 {errorMessage}
@@ -647,7 +707,7 @@ export default function FitFindrAI() {
                 <p className="mt-2 text-xs text-slate-500">Captured frames: {captureCount}</p>
 
                 {poseStatus === "running" && landmarks.length > 0 && (
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                  <div className="mt-4 hidden rounded-2xl border border-white/10 bg-slate-950/60 p-4 lg:block">
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
                       Live landmark preview
                     </p>
@@ -663,79 +723,221 @@ export default function FitFindrAI() {
                 )}
               </div>
 
-              <div className="flex flex-col gap-3">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                    Exercise selection
-                  </p>
-                  <Button
-                    className="mt-3 w-full border-white/20 bg-slate-950/70 text-slate-100 hover:bg-slate-900/80"
-                    variant="outline"
-                    onClick={() => setIsExerciseModalOpen(true)}
-                  >
-                    Select Exercise for Accuracy
-                  </Button>
-                  <p className="mt-3 text-xs text-slate-400">
-                    {exerciseSelection
-                      ? `Selected: ${exerciseSelection.name}`
-                      : "No exercise selected yet."}
-                  </p>
-                </div>
-                <Button onClick={handleContinue} disabled={isStarting}>
-                  {isStarting ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Starting
-                    </span>
-                  ) : (
-                    "Capture Form"
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleSendForReview}
-                  disabled={!landmarks.length && !recordedUrl}
-                  className="border-white/20 bg-slate-950/70 text-slate-100 hover:bg-slate-900/80"
-                >
-                  Send for Review
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={handleDownloadPackage}
-                  disabled={!canDownloadPackage}
-                >
-                  <Download className="h-4 w-4" />
-                  Download AI Package
-                </Button>
+              <div className={`flex flex-col ${isMobile ? 'gap-2' : 'gap-4'} h-full justify-end pb-safe`}>
 
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={startRecording}
-                    disabled={!isCameraOn || isRecording}
-                  >
-                    <Video className="h-4 w-4" />
-                    Start Recording
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={stopRecording}
-                    disabled={!isRecording}
-                  >
-                    Stop Recording
-                  </Button>
-                </div>
+                {/* Mobile Unified Control Panel */}
+                {isMobile ? (
+                  <div className="flex-1 flex flex-col justify-end gap-2 px-1">
+                    {/* Exercise Selection (Compact) */}
+                    <div className="rounded-[1.5rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-500/30">
+                            {exerciseSelection ? (
+                              <Check className="h-4 w-4 text-blue-400" />
+                            ) : (
+                              <Dumbbell className="h-4 w-4 text-slate-500" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-white truncate">
+                              {exerciseSelection ? exerciseSelection.name : "Select Exercise"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setIsExerciseModalOpen(true)}
+                          className="h-9 px-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                        >
+                          {exerciseSelection ? "Change" : "Select"}
+                        </Button>
+                      </div>
+                    </div>
 
-                {recordedUrl && (
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-300">
-                    <p className="font-bold">Recorded clip ready</p>
-                    <a
-                      className="mt-2 inline-block text-blue-400 hover:text-blue-300"
-                      href={recordedUrl}
-                      download={`fitfindr-ai-recording.${recordedType.includes("mp4") ? "mp4" : "webm"}`}
-                    >
-                      Download clip
-                    </a>
+                    {/* Actions (Compact) */}
+                    <div className="rounded-[1.5rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl p-3">
+                      <Button
+                        onClick={handleContinue}
+                        disabled={isStarting}
+                        className="w-full h-11 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs tracking-widest transition-all active:scale-[0.98] mb-2 shadow-lg shadow-blue-900/20"
+                      >
+                        {isStarting ? (
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Starting...
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-2">
+                            <Camera className="h-4 w-4" />
+                            Capture Form
+                          </span>
+                        )}
+                      </Button>
+
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSendForReview}
+                          disabled={!landmarks.length && !recordedUrl}
+                          className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
+                        >
+                          <Send className="h-3.5 w-3.5 mr-1.5" />
+                          Review
+                        </Button>
+                        <Button
+                          onClick={handleDownloadPackage}
+                          disabled={!canDownloadPackage}
+                          className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
+                        >
+                          <Download className="h-3.5 w-3.5 mr-1.5" />
+                          Package
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Desktop Layout - Unchanged */}
+                    {/* Exercise Selection Card */}
+                    <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl p-5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">
+                        Exercise Selection
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 flex items-center gap-3 rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-500/30">
+                            {exerciseSelection ? (
+                              <Check className="h-5 w-5 text-blue-400" />
+                            ) : (
+                              <Dumbbell className="h-5 w-5 text-slate-500" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-white">
+                              {exerciseSelection ? exerciseSelection.name : "No exercise selected"}
+                            </p>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-widest">
+                              {exerciseSelection ? "Selected" : "Tap to choose"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setIsExerciseModalOpen(true)}
+                          className="h-12 px-5 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                        >
+                          {exerciseSelection ? "Change" : "Select"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Recording Controls Card - Desktop only */}
+                    <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl p-5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">
+                        Recording
+                      </p>
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={startRecording}
+                          disabled={!isCameraOn || isRecording}
+                          className={`flex-1 h-12 rounded-[1.5rem] font-bold text-xs uppercase tracking-widest transition-all ${isRecording
+                            ? "bg-white/5 border border-white/10 text-slate-500"
+                            : "bg-rose-500/20 border border-rose-500/30 text-rose-300 hover:bg-rose-500/30"
+                            }`}
+                        >
+                          <div className={`h-3 w-3 rounded-full mr-2 ${isRecording ? "bg-slate-500" : "bg-rose-400 animate-pulse"}`} />
+                          Start
+                        </Button>
+                        <Button
+                          onClick={stopRecording}
+                          disabled={!isRecording}
+                          className={`flex-1 h-12 rounded-[1.5rem] font-bold text-xs uppercase tracking-widest transition-all ${isRecording
+                            ? "bg-slate-700 border border-slate-600 text-white hover:bg-slate-600"
+                            : "bg-white/5 border border-white/10 text-slate-500"
+                            }`}
+                        >
+                          <Square className="h-3 w-3 mr-2" />
+                          Stop
+                        </Button>
+                      </div>
+                      {isRecording && (
+                        <div className="mt-3 flex items-center gap-2 text-xs text-rose-300">
+                          <div className="h-2 w-2 rounded-full bg-rose-400 animate-pulse" />
+                          Recording in progress...
+                        </div>
+                      )}
+                      {recordedUrl && !isRecording && (
+                        <div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-2">
+                          <span className="text-xs font-bold text-emerald-300">Clip ready</span>
+                          <a
+                            className="text-xs font-bold text-emerald-400 hover:text-emerald-300 underline"
+                            href={recordedUrl}
+                            download={`fitfindr-ai-recording.${recordedType.includes("mp4") ? "mp4" : "webm"}`}
+                          >
+                            Download
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions Card */}
+                    <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl p-5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">
+                        Actions
+                      </p>
+
+                      <Button
+                        onClick={handleContinue}
+                        disabled={isStarting}
+                        className="w-full h-14 rounded-[2rem] bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-sm tracking-widest transition-all active:scale-[0.98] mb-3"
+                      >
+                        {isStarting ? (
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Starting...
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-2">
+                            <Camera className="h-5 w-5" />
+                            Capture Form
+                          </span>
+                        )}
+                      </Button>
+
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={handleSendForReview}
+                          disabled={!landmarks.length && !recordedUrl}
+                          className="flex-1 h-12 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Review
+                        </Button>
+                        <Button
+                          onClick={handleDownloadPackage}
+                          disabled={!canDownloadPackage}
+                          className="flex-1 h-12 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          AI Package
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Live Landmark Preview (Desktop only) */}
+                {!isMobile && poseStatus === "running" && landmarks.length > 0 && (
+                  <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl p-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-3">
+                      Live Landmarks
+                    </p>
+                    <div className="grid gap-2 text-xs text-slate-300 grid-cols-2">
+                      {landmarks.slice(0, 6).map((point, index) => (
+                        <div key={`${point.x}-${point.y}-${index}`} className="rounded-xl bg-white/5 border border-white/10 p-2">
+                          <span className="font-bold text-blue-400">#{index}</span>{" "}
+                          <span className="text-slate-500">x:</span>{point.x.toFixed(2)}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

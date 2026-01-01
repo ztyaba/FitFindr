@@ -2449,6 +2449,21 @@ ul.drop_down_menu li a {
     justify-content: space-between;
 }
 
+.nav-link-disabled {
+    pointer-events: none;
+    cursor: default;
+    opacity: 0.6;
+}
+
+.nav_coming_soon {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-left: 6px;
+    opacity: 0.6;
+    white-space: nowrap;
+}
+
 ul.inner_dropdown_menu li a {
     padding: 15px 20px 15px 70px;
 }
@@ -3003,6 +3018,13 @@ a.orange_btn.white_btn span.orenge_icon::before,
     display: flex;
     flex-direction: column;
     gap: 18px;
+}
+
+@media (min-width: 1201px) {
+    .hero_text_block {
+        margin-top: 80px;
+        margin-left: -12px;
+    }
 }
 
 .hero_kicker {
