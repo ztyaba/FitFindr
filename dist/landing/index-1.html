@@ -1879,7 +1879,8 @@
 
             const FEED_REFRESH_MS = 4 * 60 * 60 * 1000
             const CACHE_KEY = "fitfindr_blog_feed_cache"
-            const CACHE_MAX_AGE_MS = 30 * 60 * 1000 // 30 minutes cache validity
+            const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours cache validity
+            const FETCH_TIMEOUT_MS = 10000 // 10 second timeout per fetch attempt
             const homeBlogsSection = document.getElementById("home_blogs_v1")
             const blogHomeArea = document.querySelector(".blog_home_area")
             const feeds = [
@@ -1959,7 +1960,10 @@
 
                 for (const candidate of candidates) {
                     try {
-                        const response = await fetch(candidate)
+                        const controller = new AbortController()
+                        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+                        const response = await fetch(candidate, { signal: controller.signal })
+                        clearTimeout(timeoutId)
                         if (!response.ok) {
                             lastError = new Error(`Feed fetch returned ${response.status} for ${candidate}`)
                             continue
@@ -1996,7 +2000,10 @@
                     const candidates = buildFeedCandidates(url)
                     for (const candidate of candidates) {
                         try {
-                            const response = await fetch(candidate)
+                            const controller = new AbortController()
+                            const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+                            const response = await fetch(candidate, { signal: controller.signal })
+                            clearTimeout(timeoutId)
                             if (!response.ok) continue
                             const text = await response.text()
                             const ogMatch = text.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
@@ -2230,6 +2237,9 @@
                         lastSeenArticleLinks.set(feeds[index], article.link)
                     }
                 })
+                revealCards()
+            } else {
+                // No cache - reveal cards immediately anyway (they'll update when fetch completes)
                 revealCards()
             }
 

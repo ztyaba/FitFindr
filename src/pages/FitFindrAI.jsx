@@ -650,15 +650,15 @@ export default function FitFindrAI() {
     <div className="min-h-screen bg-slate-950 text-white">
       {showIntro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl px-4 sm:px-6 py-safe">
-          <div className="w-full max-w-sm rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl p-8 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)]">
-            <div className="flex flex-col items-center text-center gap-6">
-              <div className="flex h-20 w-20 items-center justify-center rounded-[2rem] bg-blue-500/20 border border-blue-500/30">
-                <Sparkles className="h-10 w-10 text-blue-400" />
+          <div className={`w-full rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)] ${isMobile ? 'max-w-[90vw] p-6' : 'max-w-sm p-8'}`}>
+            <div className={`flex flex-col items-center text-center ${isMobile ? 'gap-4' : 'gap-6'}`}>
+              <div className={`flex items-center justify-center rounded-[1.5rem] sm:rounded-[2rem] bg-blue-500/20 border border-blue-500/30 ${isMobile ? 'h-16 w-16' : 'h-20 w-20'}`}>
+                <Sparkles className={`text-blue-400 ${isMobile ? 'h-8 w-8' : 'h-10 w-10'}`} />
               </div>
               <div className="space-y-2">
                 <BlurText
                   text="FitFindr AI"
-                  className="text-3xl font-black tracking-tight flex justify-center"
+                  className={`font-black tracking-tight flex justify-center ${isMobile ? 'text-2xl' : 'text-3xl'}`}
                   delay={50}
                   animateBy="letters"
                   direction="top"
@@ -671,10 +671,10 @@ export default function FitFindrAI() {
                   direction="top"
                 />
               </div>
-              <div className="w-full space-y-4">
+              <div className="w-full space-y-3 sm:space-y-4">
                 <Button
                   onClick={handleContinue}
-                  className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs tracking-[0.2em] transition-all shadow-xl shadow-blue-900/30 active:scale-95"
+                  className={`w-full rounded-xl sm:rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs tracking-[0.2em] transition-all shadow-xl shadow-blue-900/30 active:scale-95 ${isMobile ? 'h-12' : 'h-14'}`}
                 >
                   <BlurText text="Grant Permission" delay={40} className="flex justify-center" />
                 </Button>

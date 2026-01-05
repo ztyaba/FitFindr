@@ -661,9 +661,9 @@ input.input-textarea::placeholder {
     mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%);
 }
 
-.pattern-bg > .container,
-.pattern-bg > .container-fluid,
-.pattern-bg > * {
+.pattern-bg>.container,
+.pattern-bg>.container-fluid,
+.pattern-bg>* {
     position: relative;
     z-index: 1;
 }
@@ -6969,8 +6969,8 @@ body.scrolled .scrolltop_area {
 
 /* Blog Feed Hydration States */
 .blog_home_area .blog_home_v1 {
-    opacity: 0;
-    transform: translateY(10px);
+    opacity: 0.6;
+    transform: translateY(0);
     transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 }
 

@@ -80,6 +80,23 @@ export default function Layout({ children }) {
     };
   }, []);
 
+  // Prevent horizontal swipe/scroll on Calendar and AI pages to avoid accidental menu access
+  React.useEffect(() => {
+    if (isCalendarPage || isAiPage) {
+      document.body.style.overflowX = 'hidden';
+      document.body.style.overscrollBehaviorX = 'none';
+      document.body.style.touchAction = 'pan-y pinch-zoom';
+      document.documentElement.style.overflowX = 'hidden';
+
+      return () => {
+        document.body.style.overflowX = '';
+        document.body.style.overscrollBehaviorX = '';
+        document.body.style.touchAction = '';
+        document.documentElement.style.overflowX = '';
+      };
+    }
+  }, [isCalendarPage, isAiPage]);
+
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/99b4f91f-a089-4227-b05d-f4392b5d7598', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Layout.jsx:36', message: 'Layout render', data: { pathname: location.pathname, browseUrl: createPageUrl("Browse"), isBrowsePage, timestamp: Date.now() }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
   // #endregion
