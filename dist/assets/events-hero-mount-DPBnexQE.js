@@ -1,0 +1,1 @@
+import{c as t,j as o}from"./StaggeredMenu-DvFna6NG.js";import{T as r}from"./Threads-DXH_mMTm.js";import"./Triangle-GlFcswsc.js";const e=document.getElementById("events-hero-threads");e&&t.createRoot(e).render(o.jsx(r,{color:[.043137254901960784,.25098039215686274,.8784313725490196],amplitude:2.8,distance:0,enableMouseInteraction:!0,style:{width:"100%",height:"100%"}}));
