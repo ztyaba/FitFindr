@@ -4,7 +4,7 @@ import path from 'path'
 import { readdirSync } from 'fs'
 
 // Collect all landing HTML files for multi-page build
-const landingDir = path.resolve(__dirname, 'public/landing')
+const landingDir = path.resolve(__dirname, 'landing')
 const landingHtmlFiles = readdirSync(landingDir)
   .filter(file => file.endsWith('.html'))
   .reduce((entries, file) => {
