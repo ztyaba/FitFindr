@@ -170,6 +170,11 @@ export default function FitFindrAI() {
     () => typeof window !== "undefined" && window.innerWidth < 768
   );
 
+  // Handle auto-start camera on mount - REMOVED: using Grant Permission button instead
+  useEffect(() => {
+    // We now wait for the user to click "Grant Permission" in the intro screen
+  }, []);
+
   // Handle resize for mobile detection
   useEffect(() => {
     const handleResize = () => {
@@ -645,31 +650,38 @@ export default function FitFindrAI() {
     <div className="min-h-screen bg-slate-950 text-white">
       {showIntro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl px-4 sm:px-6 py-safe">
-          <div className="w-full max-w-md rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl p-6 sm:p-8 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)] max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-blue-500/20 border border-blue-500/30">
-                <Sparkles className="h-7 w-7 text-blue-400" />
+          <div className="w-full max-w-sm rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl p-8 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)]">
+            <div className="flex flex-col items-center text-center gap-6">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[2rem] bg-blue-500/20 border border-blue-500/30">
+                <Sparkles className="h-10 w-10 text-blue-400" />
               </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-black tracking-tight">FitFindr AI</h2>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400">Form Analysis</p>
+              <div className="space-y-2">
+                <BlurText
+                  text="FitFindr AI"
+                  className="text-3xl font-black tracking-tight flex justify-center"
+                  delay={50}
+                  animateBy="letters"
+                  direction="top"
+                />
+                <BlurText
+                  text="Initializing Core..."
+                  className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 flex justify-center"
+                  delay={30}
+                  animateBy="letters"
+                  direction="top"
+                />
               </div>
-            </div>
-            <div className="mt-6 space-y-3">
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Analyze your form using real-time motion capture and AI-powered movement analysis.
-              </p>
-              <p className="text-xs text-slate-500">
-                All tracking happens on-device. Nothing is stored or saved.
-              </p>
-            </div>
-            <div className="mt-8">
-              <Button
-                className="w-full h-14 rounded-[2rem] bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-sm tracking-widest transition-all active:scale-[0.98]"
-                onClick={handleContinue}
-              >
-                Enable Camera
-              </Button>
+              <div className="w-full space-y-4">
+                <Button
+                  onClick={handleContinue}
+                  className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs tracking-[0.2em] transition-all shadow-xl shadow-blue-900/30 active:scale-95"
+                >
+                  <BlurText text="Grant Permission" delay={40} className="flex justify-center" />
+                </Button>
+                <p className="text-[10px] text-slate-500 font-medium tracking-wide">
+                  Camera access required for form analysis
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -726,11 +738,17 @@ export default function FitFindrAI() {
                 </Button>
                 <Button
                   size="sm"
-                  onClick={stopCamera}
-                  disabled={!isCameraOn}
-                  className="h-10 px-4 rounded-[2rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                  onClick={isCameraOn ? stopCamera : () => startCamera({ nextFacingMode: facingMode, autoStartPose: true })}
+                  className="h-10 px-6 rounded-[2rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center min-w-[120px]"
                 >
-                  Off
+                  <BlurText
+                    key={isCameraOn ? "on" : "off"}
+                    text={isCameraOn ? "Off" : "Capture Form"}
+                    delay={40}
+                    animateBy="letters"
+                    direction="top"
+                    className="flex justify-center"
+                  />
                 </Button>
               </div>
             </div>
@@ -812,7 +830,13 @@ export default function FitFindrAI() {
 
             <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
               <div>
-                <h2 className="text-lg font-black">AI Interpretation</h2>
+                <BlurText
+                  text="AI Interpretation"
+                  className="text-lg font-black flex"
+                  delay={50}
+                  animateBy="words"
+                  direction="top"
+                />
                 <p className="mt-2 text-sm text-slate-400">{REVIEW_COPY[displayStatus]}</p>
                 <p className="mt-2 text-xs text-slate-500">Captured frames: {captureCount}</p>
 
@@ -1020,26 +1044,8 @@ export default function FitFindrAI() {
                       </div>
                     </div>
 
-                    {/* Actions (Compact) */}
+                    {/* Actions (Compact) removed as requested - using top overlay button */}
                     <div className="rounded-[1.5rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl p-3">
-                      <Button
-                        onClick={handleContinue}
-                        disabled={isStarting}
-                        className="w-full h-11 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs tracking-widest transition-all active:scale-[0.98] mb-2 shadow-lg shadow-blue-900/20"
-                      >
-                        {isStarting ? (
-                          <span className="inline-flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Starting...
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-2">
-                            <Camera className="h-4 w-4" />
-                            Capture Form
-                          </span>
-                        )}
-                      </Button>
-
                       <div className="flex flex-col gap-2">
                         {isPackageReady && (
                           <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-200">
@@ -1155,10 +1161,10 @@ export default function FitFindrAI() {
                       )}
                     </div>
 
-                    {/* Actions Card */}
+                    {/* Actions Card - Logic moved to top overlay toggle */}
                     <div className="rounded-[2rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl p-5">
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">
-                        Actions
+                        Analysis
                       </p>
 
                       {isPackageReady && (
@@ -1167,30 +1173,12 @@ export default function FitFindrAI() {
                         </div>
                       )}
 
-                      <Button
-                        onClick={handleContinue}
-                        disabled={isStarting}
-                        className="w-full h-14 rounded-[2rem] bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-sm tracking-widest transition-all active:scale-[0.98] mb-3"
-                      >
-                        {isStarting ? (
-                          <span className="inline-flex items-center gap-2">
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            Starting...
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-2">
-                            <Camera className="h-5 w-5" />
-                            Capture Form
-                          </span>
-                        )}
-                      </Button>
-
                       <div className="flex gap-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4 w-full">
                           <Button
                             onClick={handleSendForReview}
                             disabled
-                            className="flex-1 h-12 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="flex-1 h-14 rounded-[2rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {isReviewBusy ? (
                               <span className="inline-flex items-center gap-2">
@@ -1200,7 +1188,7 @@ export default function FitFindrAI() {
                             ) : (
                               <span className="inline-flex items-center gap-2">
                                 <Send className="h-4 w-4" />
-                                Review
+                                Review Form
                               </span>
                             )}
                           </Button>

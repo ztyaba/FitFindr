@@ -234,7 +234,7 @@ export default function Calendar() {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-t-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl max-h-[85dvh] sm:max-h-none"
+              className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-t-[2.5rem] sm:rounded-[3rem] overflow-hidden shadow-2xl max-h-[90dvh] sm:max-h-none flex flex-col"
             >
               <div className="p-6 sm:p-10">
                 <div className="flex items-center justify-between mb-8">
@@ -250,7 +250,7 @@ export default function Calendar() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setSelectedDate(null)}
-                    className="rounded-2xl hover:bg-white/5 text-slate-500"
+                    className="h-12 w-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white border border-white/10 shadow-lg"
                   >
                     <X className="w-6 h-6" />
                   </Button>

@@ -920,8 +920,9 @@
                                     <div class="col-lg-3 col-sm-6 d-xl-block d-lg-none d-block">
                                         <div class="we_offer_box reveal custom_zoom_in">
                                             <div class="we_offer_icon">
-                                                <img src="/landing/assets/images/Offer2/AI%20Form2.png" alt="AI Form Analysis"
-                                                    class="img-fluid ai-form-icon" width="160" height="160">
+                                                <img src="/landing/assets/images/Offer2/AI%20Form2.png"
+                                                    alt="AI Form Analysis" class="img-fluid ai-form-icon" width="160"
+                                                    height="160">
                                             </div>
                                             <div class="we_offer_info">
                                                 <h5 class="satoshi_fontfamily_bold">AI Form Analysis</h5>
@@ -964,8 +965,8 @@
                                 <div class="program_v1_box" data-aos="fade-up" data-aos-offset="50"
                                     data-aos-easing="ease-in-sine" data-aos-delay="100">
                                     <div class="program_v1_img h-100">
-                                        <img src="/landing/assets/images/Demo%20Section/CommunityFitness.png" alt="program_img"
-                                            class="h-100 w-100">
+                                        <img src="/landing/assets/images/Demo%20Section/CommunityFitness.png"
+                                            alt="program_img" class="h-100 w-100">
                                         <a href="/versus" class="program_v1_btn color_white">
                                             <h4 class="program_title line_height_normal color_white">COMMUNITY FITNESS
                                             </h4>
@@ -990,8 +991,8 @@
                                 <div class="program_v1_box" data-aos="fade-down" data-aos-offset="50"
                                     data-aos-easing="ease-in-sine" data-aos-delay="150">
                                     <div class="program_v1_img h-100">
-                                        <img src="/landing/assets/images/Demo%20Section/PersonalTraining.png" alt="program_img"
-                                            class="h-100 w-100">
+                                        <img src="/landing/assets/images/Demo%20Section/PersonalTraining.png"
+                                            alt="program_img" class="h-100 w-100">
                                         <a href="/browse" class="program_v1_btn color_white">
                                             <h4 class="program_title line_height_normal color_white">PERSONAL TRAINING
                                             </h4>
@@ -1080,8 +1081,8 @@
                                             <div class="progress_img position-relative" data-aos="zoom-in"
                                                 data-aos-offset="100" data-aos-easing="ease-in-sine"
                                                 data-aos-delay="100">
-                                                <img src="/landing/assets/images/Our%20Process/FindPro.png" alt="progress_img"
-                                                    class="progress_img_pera">
+                                                <img src="/landing/assets/images/Our%20Process/FindPro.png"
+                                                    alt="progress_img" class="progress_img_pera">
                                             </div>
                                             <div class="progress_step_info overflow-hidden">
                                                 <h5 data-aos="fade-down">FIND A PRO TRAINER</h5>
@@ -1114,8 +1115,8 @@
                                             <div class="progress_img position-relative" data-aos="zoom-in"
                                                 data-aos-offset="100" data-aos-easing="ease-in-sine"
                                                 data-aos-delay="500">
-                                                <img src="/landing/assets/images/Our%20Process/Schedule.png" alt="progress_img"
-                                                    class="progress_img_pera">
+                                                <img src="/landing/assets/images/Our%20Process/Schedule.png"
+                                                    alt="progress_img" class="progress_img_pera">
                                             </div>
                                             <div class="progress_step_info overflow-hidden">
                                                 <h5 data-aos="fade-down">SCHEDULE & ORGANIZE</h5>
@@ -1169,7 +1170,8 @@
                                     </svg>
                                 </span>
                             </a>
-                            <img src="/landing/assets/images/dummy-img/video_img_1.png" alt="traning_video" class="h-100">
+                            <img src="/landing/assets/images/dummy-img/video_img_1.png" alt="traning_video"
+                                class="h-100">
                         </div>
                     </div>
                 </div>
@@ -1254,7 +1256,8 @@
                             </div>
                             <div class="client_say_img_info pt-60" data-animation-in="fadeInUp" data-delay-in="0.2">
                                 <div class="client_say_img">
-                                    <img src="/landing/assets/images/dummy-img/testimonial_img_4.png" alt="client_say_image">
+                                    <img src="/landing/assets/images/dummy-img/testimonial_img_4.png"
+                                        alt="client_say_image">
                                 </div>
                                 <div class="client_say_img_detail">
                                     <h5 class="line_height_normal color_white">ALEXIS MORTON</h5>
@@ -1273,7 +1276,8 @@
                             </div>
                             <div class="client_say_img_info pt-60" data-animation-in="fadeInUp" data-delay-in="0.2">
                                 <div class="client_say_img">
-                                    <img src="/landing/assets/images/dummy-img/testimonial_img_4.png" alt="client_say_image">
+                                    <img src="/landing/assets/images/dummy-img/testimonial_img_4.png"
+                                        alt="client_say_image">
                                 </div>
                                 <div class="client_say_img_detail">
                                     <h5 class="line_height_normal color_white">ALISA FOX</h5>
@@ -1310,7 +1314,8 @@
                                         View More
                                     </span>
                                     <span class="orenge_icon whiteglow_btn">
-                                        <img src="/landing/assets/images/svgs/common_button_arrow.svg" alt="common_button_arrow">
+                                        <img src="/landing/assets/images/svgs/common_button_arrow.svg"
+                                            alt="common_button_arrow">
                                     </span>
                                 </a>
                             </div>
@@ -1873,7 +1878,10 @@
             if (!blogCards.length) return
 
             const FEED_REFRESH_MS = 4 * 60 * 60 * 1000
+            const CACHE_KEY = "fitfindr_blog_feed_cache"
+            const CACHE_MAX_AGE_MS = 30 * 60 * 1000 // 30 minutes cache validity
             const homeBlogsSection = document.getElementById("home_blogs_v1")
+            const blogHomeArea = document.querySelector(".blog_home_area")
             const feeds = [
                 "https://feeds.feedburner.com/acefitness/fitnovatives",
                 "https://athletechnews.com/category/tech/feed/",
@@ -1881,6 +1889,40 @@
             ]
 
             const lastSeenArticleLinks = new Map()
+
+            // Cache management functions
+            const getCache = () => {
+                try {
+                    const cached = localStorage.getItem(CACHE_KEY)
+                    if (!cached) return null
+                    const parsed = JSON.parse(cached)
+                    if (Date.now() - parsed.timestamp > CACHE_MAX_AGE_MS) {
+                        localStorage.removeItem(CACHE_KEY)
+                        return null
+                    }
+                    return parsed.articles
+                } catch (e) {
+                    console.warn("Failed to read blog cache:", e)
+                    return null
+                }
+            }
+
+            const setCache = (articles) => {
+                try {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
+                        timestamp: Date.now(),
+                        articles
+                    }))
+                } catch (e) {
+                    console.warn("Failed to save blog cache:", e)
+                }
+            }
+
+            const revealCards = () => {
+                if (blogHomeArea) {
+                    blogHomeArea.classList.add("feed-hydrated")
+                }
+            }
 
             const buildFeedCandidates = (url) => [
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -2073,6 +2115,8 @@
             }
 
             const hydrateFeeds = async () => {
+                const fetchedArticles = new Array(feeds.length).fill(null)
+
                 await Promise.all(
                     feeds.map(async (feedUrl, index) => {
                         const targetCard = blogCards[index]
@@ -2089,13 +2133,15 @@
                                     return
                                 }
 
-                                updateCard(targetCard, {
+                                const article = {
                                     title: item.title,
                                     link: item.link,
                                     date: "",
                                     excerpt: buildExcerpt(item.excerpt),
                                     image: "",
-                                })
+                                }
+                                updateCard(targetCard, article)
+                                fetchedArticles[index] = article
 
                                 lastSeenArticleLinks.set(feedUrl, item.link)
                                 return
@@ -2133,13 +2179,15 @@
                                 extractText(firstItem, "updated") ||
                                 extractText(firstItem, "published")
 
-                            updateCard(targetCard, {
+                            const article = {
                                 title,
                                 link: articleLink,
                                 date: formatDate(dateValue),
                                 excerpt: buildExcerpt(rawContent),
                                 image,
-                            })
+                            }
+                            updateCard(targetCard, article)
+                            fetchedArticles[index] = article
 
                             lastSeenArticleLinks.set(feedUrl, articleLink)
 
@@ -2151,6 +2199,17 @@
                         }
                     })
                 )
+
+                // Save fetched articles to cache if we got any new data
+                const hasNewData = fetchedArticles.some(a => a !== null)
+                if (hasNewData) {
+                    // Merge with existing cache if some feeds failed
+                    const existingCache = getCache() || []
+                    const mergedArticles = fetchedArticles.map((article, index) =>
+                        article || existingCache[index] || null
+                    )
+                    setCache(mergedArticles)
+                }
             }
 
             const updateNextRefreshMetadata = () => {
@@ -2161,7 +2220,23 @@
                 return nextRefreshTimestamp
             }
 
-            hydrateFeeds()
+            // Try to load from cache first for instant display
+            const cachedArticles = getCache()
+            if (cachedArticles && cachedArticles.length) {
+                cachedArticles.forEach((article, index) => {
+                    const targetCard = blogCards[index]
+                    if (targetCard && article) {
+                        updateCard(targetCard, article)
+                        lastSeenArticleLinks.set(feeds[index], article.link)
+                    }
+                })
+                revealCards()
+            }
+
+            // Then fetch fresh data (will update if newer)
+            hydrateFeeds().then(() => {
+                revealCards()
+            })
             updateNextRefreshMetadata()
 
             const startFeedHydrationInterval = () => {

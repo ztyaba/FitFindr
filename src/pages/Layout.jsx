@@ -109,7 +109,7 @@ export default function Layout({ children }) {
                   hidePanelClose={true}
                   hideLogo={false}
                   headerPosition="static"
-                  headerJustify="space-between"
+                  disableSwipe={useInlineStaggeredMenu}
                 />
               ) : (
                 <>
@@ -169,9 +169,9 @@ export default function Layout({ children }) {
           isFixed={true}
           closeOnClickAway={true}
           hideHeader={true}
-          externalOpen={mobileMenuOpen}
           onExternalClose={closeMobileMenu}
           onMenuClose={closeMobileMenu}
+          disableSwipe={isCalendarPage || isAiPage}
         />
       )}
 

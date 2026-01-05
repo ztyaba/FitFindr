@@ -56,23 +56,23 @@ export default function GameDetailDialog({ game, onClose, onJoin }) {
           <div className="absolute inset-0 flex items-center justify-center opacity-30">
             <span className="text-9xl transform -rotate-12">{SPORT_EMOJIS[game.sport] || "🏆"}</span>
           </div>
-          <div className="absolute top-8 right-8 flex gap-3">
-            <Badge className={`${SPORT_COLORS[game.sport]} border-0 px-4 py-1.5 rounded-full font-black uppercase tracking-widest text-[10px]`}>
+          <div className="absolute top-6 right-6 flex gap-2">
+            <Badge className={`${SPORT_COLORS[game.sport]} border-0 px-3 py-1 rounded-full font-black uppercase tracking-widest text-[9px] shadow-lg`}>
               {game.sport?.replace(/_/g, ' ')}
             </Badge>
-            <Badge variant={isGameFull ? "destructive" : "secondary"} className={`border-0 px-4 py-1.5 rounded-full font-black uppercase tracking-widest text-[10px] ${isGameFull ? "bg-rose-500/20 text-rose-300" : "bg-emerald-500/20 text-emerald-300"}`}>
+            <Badge variant={isGameFull ? "destructive" : "secondary"} className={`border-0 px-3 py-1 rounded-full font-black uppercase tracking-widest text-[9px] shadow-lg ${isGameFull ? "bg-rose-500/20 text-rose-300" : "bg-emerald-500/20 text-emerald-300"}`}>
               {isGameFull ? "FULL" : "OPEN"}
             </Badge>
           </div>
 
-          <div className="absolute bottom-8 left-8 right-8">
-            <h2 className="text-4xl font-black text-white tracking-tight leading-none mb-2">
+          <div className="absolute bottom-6 left-6 right-6">
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight mb-2">
               {game.title}
             </h2>
           </div>
         </div>
 
-        <div className="p-10 space-y-10 max-h-[70vh] overflow-y-auto glass-scrollbar">
+        <div className="p-6 sm:p-10 space-y-8 sm:space-y-10 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto glass-scrollbar">
           {/* Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
@@ -125,24 +125,24 @@ export default function GameDetailDialog({ game, onClose, onJoin }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 py-10 border-y border-white/5">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
-                <DollarSign className="w-6 h-6 text-emerald-400" />
+          <div className="grid grid-cols-2 gap-4 sm:gap-10 py-8 sm:py-10 border-y border-white/5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
               </div>
               <div>
-                <div className="text-2xl font-black text-white tracking-tight">${game.cost_per_person || 0}</div>
-                <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Per Spot</div>
+                <div className="text-xl sm:text-2xl font-black text-white tracking-tight">${game.cost_per_person || 0}</div>
+                <div className="text-[9px] sm:text-sm font-bold text-slate-400 uppercase tracking-widest">Per Spot</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
-                <Award className="w-6 h-6 text-yellow-500" />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-lg">
+                <Award className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
               </div>
               <div>
-                <div className="text-lg font-black text-white tracking-tight capitalize">{game.skill_level?.replace(/_/g, ' ')}</div>
-                <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Skill Level</div>
+                <div className="text-base sm:text-lg font-black text-white tracking-tight capitalize">{game.skill_level?.replace(/_/g, ' ')}</div>
+                <div className="text-[9px] sm:text-sm font-bold text-slate-400 uppercase tracking-widest">Skill Level</div>
               </div>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function GameDetailDialog({ game, onClose, onJoin }) {
 
           {/* Organizer Info */}
           <div className="pt-8 border-t border-white/5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-6">
               <div>
                 <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Organizer</div>
                 <div className="text-white font-black">{game.organizer_name}</div>
@@ -165,9 +165,9 @@ export default function GameDetailDialog({ game, onClose, onJoin }) {
               <Button
                 onClick={handleJoinGame}
                 disabled={isGameFull}
-                className={`h-16 px-12 rounded-[1.5rem] font-black uppercase tracking-[0.2em] transition-all shadow-xl ${isGameFull
-                    ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20 active:scale-95'
+                className={`h-14 sm:h-16 px-8 sm:px-12 rounded-2xl sm:rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs transition-all shadow-xl ${isGameFull
+                  ? 'bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20 active:scale-95'
                   }`}
               >
                 {isGameFull ? "Match Full" : "Join Matchup"}

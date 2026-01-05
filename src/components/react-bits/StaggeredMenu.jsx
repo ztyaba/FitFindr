@@ -30,7 +30,8 @@ export const StaggeredMenu = ({
     onMenuOpen,
     onMenuClose,
     externalOpen,
-    onExternalClose
+    onExternalClose,
+    disableSwipe = false
 }) => {
     const [internalOpen, setInternalOpen] = useState(false);
     const open = externalOpen !== undefined ? externalOpen : internalOpen;
@@ -515,7 +516,10 @@ export const StaggeredMenu = ({
     return (
         <div
             className={(className ? className + ' ' : '') + 'staggered-menu-wrapper' + (isFixed ? ' fixed-wrapper' : '')}
-            style={accentColor ? { ['--sm-accent']: accentColor } : undefined}
+            style={{
+                ...(accentColor ? { ['--sm-accent']: accentColor } : {}),
+                ...(disableSwipe ? { touchAction: 'pan-y' } : {})
+            }}
             data-position={position}
             data-open={open || undefined}
             data-panel-toggle={panelCloseMatchesToggle || undefined}
