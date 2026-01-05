@@ -41,6 +41,7 @@ import VersusMapCard from "../components/versus/VersusMapCard";
 import { Badge } from "@/components/ui/badge";
 import { useRef } from "react";
 import { Drawer as VaulDrawer } from "vaul";
+import LampDemo from "@/components/lamp-demo";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   month: "short",
@@ -1000,71 +1001,68 @@ export default function Versus() {
             </div>
           </header>
 
-          <section className="relative min-h-[70vh] flex flex-col items-center justify-center pt-20">
-            <div className="absolute inset-0 z-0">
-              <VersusWebGL className="absolute inset-0 w-full h-full opacity-60" />
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950" />
-            </div>
-
-            <div className="relative z-10 max-w-5xl mx-auto px-6 text-center pt-20">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8"
-              >
-                <Zap className="w-4 h-4" />
-                Next Level Competition
-              </motion.div>
-
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-6xl md:text-8xl font-black mb-8 text-white tracking-tighter"
-              >
-                FitFindr
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 drop-shadow-[0_0_30px_rgba(59,130,246,0.5)]">
-                  Versus
-                </span>
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-medium leading-relaxed"
-              >
-                The ultimate arena for local athletes. Discover high-stakes matchups,
-                book premium courts, and climb the local leaderboards.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="flex flex-wrap items-center justify-center gap-4"
-              >
-                <Button
-                  onClick={() => setShowCreateGame(true)}
-                  size="lg"
-                  className="h-16 px-10 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-sm rounded-[2rem] shadow-xl shadow-blue-950/40 active:scale-95 transition-all"
+          <section className="relative min-h-[400px] flex flex-col items-center justify-center pt-4">
+            <LampDemo>
+              <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-white text-slate-950 text-[10px] font-black uppercase tracking-[0.2em] mb-8 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
                 >
-                  <Plus className="w-5 h-5 mr-3" />
-                  Create Matchup
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setLayoutMode("map")}
-                  className="h-16 px-10 bg-white/5 border-white/10 hover:bg-white/10 text-white font-black uppercase tracking-widest text-sm rounded-[2rem] backdrop-blur-md active:scale-95 transition-all"
+                  <Zap className="w-4 h-4" />
+                  Next Level Competition
+                </motion.div>
+
+                <motion.h1
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-6xl md:text-8xl font-black mb-8 text-white tracking-tighter"
                 >
-                  <MapPin className="w-5 h-5 mr-3 text-blue-400" />
-                  View Map
-                </Button>
-              </motion.div>
-            </div>
+                  FitFindr
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 drop-shadow-[0_0_30px_rgba(59,130,246,0.5)]">
+                    Versus
+                  </span>
+                </motion.h1>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-medium leading-relaxed"
+                >
+                  The ultimate arena for local athletes. Discover high-stakes matchups,
+                  book premium courts, and climb the local leaderboards.
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="flex flex-wrap items-center justify-center gap-4"
+                >
+                  <Button
+                    onClick={() => setShowCreateGame(true)}
+                    size="lg"
+                    className="h-16 px-10 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-sm rounded-[2rem] shadow-xl shadow-blue-950/40 active:scale-95 transition-all"
+                  >
+                    <Plus className="w-5 h-5 mr-3" />
+                    Create Matchup
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setLayoutMode("map")}
+                    className="h-16 px-10 bg-white/5 border-white/10 hover:bg-white/10 text-white font-black uppercase tracking-widest text-sm rounded-[2rem] backdrop-blur-md active:scale-95 transition-all"
+                  >
+                    <MapPin className="w-5 h-5 mr-3 text-blue-400" />
+                    View Map
+                  </Button>
+                </motion.div>
+              </div>
+            </LampDemo>
           </section>
 
-          <section className="max-w-7xl mx-auto px-6 py-20">
+          <section className="max-w-7xl mx-auto px-6 pt-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-16">
                 <TabsList className="bg-white/5 border border-white/10 rounded-[2.5rem] p-2 h-auto flex flex-wrap gap-2">

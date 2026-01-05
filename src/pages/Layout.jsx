@@ -4,11 +4,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Users, Zap, Calendar, Star, Menu, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import StaggeredMenu from "@/components/react-bits/StaggeredMenu";
 
 const navigationItems = [
   {
@@ -33,15 +29,55 @@ const navigationItems = [
   },
 ];
 
+// Convert navigation items to StaggeredMenu format
+const menuItems = navigationItems.map(item => ({
+  label: item.title,
+  ariaLabel: `Navigate to ${item.title}`,
+  link: item.url
+}));
+
 export default function Layout({ children }) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [mobileMenuMounted, setMobileMenuMounted] = React.useState(false);
+  const closeTimeoutRef = React.useRef(null);
 
   // Hide Layout header/footer for Map-centric pages (Browse and Versus)
   // These pages manage their own navigation (floating navbar or custom grid header)
   const isBrowsePage = location.pathname === createPageUrl("Browse");
   const isVersusPage = location.pathname === createPageUrl("Versus");
   const shouldHideLayoutNav = isBrowsePage || isVersusPage;
+  const isCalendarPage = location.pathname === createPageUrl("Calendar");
+  const isAiPage = location.pathname === createPageUrl("FitFindr AI");
+  const useInlineStaggeredMenu = isCalendarPage || isAiPage;
+
+  const openMobileMenu = React.useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setMobileMenuMounted(true);
+    setMobileMenuOpen(true);
+  }, []);
+
+  const closeMobileMenu = React.useCallback(() => {
+    setMobileMenuOpen(false);
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    closeTimeoutRef.current = setTimeout(() => {
+      setMobileMenuMounted(false);
+      closeTimeoutRef.current = null;
+    }, 360);
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/99b4f91f-a089-4227-b05d-f4392b5d7598', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'Layout.jsx:36', message: 'Layout render', data: { pathname: location.pathname, browseUrl: createPageUrl("Browse"), isBrowsePage, timestamp: Date.now() }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' }) }).catch(() => { });
@@ -53,70 +89,89 @@ export default function Layout({ children }) {
       {!shouldHideLayoutNav && (
         <header className="sticky top-0 z-50 bg-slate-900/50 backdrop-blur-xl border-b border-white/10 shadow-2xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              {/* Logo */}
-              <Link to="/" className="flex items-center gap-3 group">
-                <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-110" />
-              </Link>
+            <div className="flex justify-between items-center h-16 w-full">
+              {useInlineStaggeredMenu ? (
+                <StaggeredMenu
+                  className="sm-inline sm-ai-menu w-full"
+                  colors={['#B19EEF', '#5227FF']}
+                  accentColor="#0022a8"
+                  items={menuItems}
+                  displaySocials={false}
+                  displayItemNumbering={true}
+                  showDiscuss={false}
+                  logoUrl="/landing/assets/images/logos/Logo4.png"
+                  logoLink="/"
+                  logoLinkComponent={Link}
+                  menuButtonColor="#fff"
+                  openMenuButtonColor="#111"
+                  isFixed={false}
+                  hidePanelClose={true}
+                  hideLogo={false}
+                  headerPosition="static"
+                  headerJustify="space-between"
+                />
+              ) : (
+                <>
+                  {/* Logo */}
+                  <Link to="/" className="flex items-center gap-3 group">
+                    <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-all duration-300 transform group-hover:scale-110" />
+                  </Link>
 
-              {/* Desktop Navigation */}
-              <nav className="hidden md:flex items-center gap-8">
-                {navigationItems.map((item) => {
-                  const isActive = location.pathname === item.url;
-                  return (
-                    <Link
-                      key={item.title}
-                      to={item.url}
-                      className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-all duration-300 ${isActive
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                        }`}
-                    >
-                      <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                      <span className="text-sm font-bold">{item.title}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-
-              {/* Mobile Menu */}
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="icon" className="text-slate-600">
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-80 bg-slate-950 border-white/10 text-white">
-                  <div className="flex items-center gap-3 mb-8">
-                    <Link to="/" onClick={() => setMobileMenuOpen(false)}>
-                      <img src="/landing/assets/images/logos/Logo4.png" alt="FitFindr Logo" className="h-10 w-auto object-contain transition-transform active:scale-95" />
-                    </Link>
-                  </div>
-
-                  <nav className="space-y-2">
+                  {/* Desktop Navigation */}
+                  <nav className="hidden md:flex items-center gap-8">
                     {navigationItems.map((item) => {
                       const isActive = location.pathname === item.url;
                       return (
                         <Link
                           key={item.title}
                           to={item.url}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${isActive
-                            ? 'bg-blue-600/10 text-blue-400'
+                          className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-all duration-300 ${isActive
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                             : 'text-slate-400 hover:text-white hover:bg-white/5'
                             }`}
                         >
-                          <item.icon className={`w-5 h-5 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
-                          <span className="font-medium">{item.title}</span>
+                          <item.icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                          <span className="text-sm font-bold">{item.title}</span>
                         </Link>
                       );
                     })}
                   </nav>
-                </SheetContent>
-              </Sheet>
+
+                  {/* Standard Mobile Menu Toggle */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="md:hidden text-slate-400 hover:text-white"
+                    onClick={openMobileMenu}
+                  >
+                    <Menu className="w-5 h-5" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </header>
+      )}
+
+      {/* StaggeredMenu for Mobile - Only on Calendar and AI pages */}
+      {!shouldHideLayoutNav && !useInlineStaggeredMenu && mobileMenuMounted && (
+        <StaggeredMenu
+          colors={['#B19EEF', '#5227FF']}
+          accentColor="#0022a8"
+          items={menuItems}
+          displaySocials={false}
+          displayItemNumbering={true}
+          showDiscuss={false}
+          logoUrl="/landing/assets/images/logos/Logo4.png"
+          menuButtonColor="#fff"
+          openMenuButtonColor="#333"
+          isFixed={true}
+          closeOnClickAway={true}
+          hideHeader={true}
+          externalOpen={mobileMenuOpen}
+          onExternalClose={closeMobileMenu}
+          onMenuClose={closeMobileMenu}
+        />
       )}
 
       {/* Main Content */}

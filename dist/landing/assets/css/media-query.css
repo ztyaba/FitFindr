@@ -1785,6 +1785,9 @@
     .header_get_touch_sociallink .row>div {
         width: 50%;
     }
+    .header_toggle_menu_area {
+        gap: 2px;
+    }
     .blog_home_v2 {
         grid-template-columns: 100%;
     }

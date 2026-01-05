@@ -643,6 +643,31 @@ input.input-textarea::placeholder {
     background-color: #FFF;
 }
 
+.pattern-bg {
+    position: relative;
+    background-color: #f8fafc;
+    min-height: 100%;
+}
+
+.pattern-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px),
+        linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+    background-size: 20px 30px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%);
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%);
+}
+
+.pattern-bg > .container,
+.pattern-bg > .container-fluid,
+.pattern-bg > * {
+    position: relative;
+    z-index: 1;
+}
+
 .color_black {
     color: #000;
 }
@@ -2862,11 +2887,37 @@ a.orange_btn.white_btn span.orenge_icon::before,
     align-items: flex-start;
     /* Align from top, not center */
     justify-content: center;
+    z-index: 2;
+    pointer-events: none;
 }
 
 .banner_slider_content h1,
 .blog_leave_form h6 {
     padding: 20px 0px 40px;
+}
+
+.banner_slider_content * {
+    pointer-events: auto;
+}
+
+#hero-floating-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    z-index: 0;
+    pointer-events: auto;
+}
+
+.hero-floating-lines {
+    width: 100%;
+    height: 100%;
+}
+
+.hero-gradient-blinds {
+    width: 100%;
+    height: 100%;
 }
 
 .home_banner_slider {
@@ -3012,18 +3063,29 @@ a.orange_btn.white_btn span.orenge_icon::before,
     color: #f5f7fb;
     padding-top: 40px;
     /* Add spacing from top */
+    pointer-events: none;
+    height: 100%;
+}
+
+.hero_layout a,
+.hero_layout button {
+    pointer-events: auto;
 }
 
 .hero_text_block {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    align-self: end;
+    margin-top: 0;
+    margin-bottom: clamp(40px, 8vh, 140px);
+    margin-left: -24px;
 }
 
 @media (min-width: 1201px) {
     .hero_text_block {
-        margin-top: 80px;
-        margin-left: -12px;
+        margin-bottom: clamp(80px, 12vh, 180px);
+        margin-left: -32px;
     }
 }
 
@@ -3040,6 +3102,23 @@ a.orange_btn.white_btn span.orenge_icon::before,
     text-transform: uppercase;
     color: #f7fbff;
     max-width: 620px;
+}
+
+.split-hero-headline .split-char {
+    will-change: transform, opacity;
+}
+
+.fitfindr-type-text {
+    font-family: inherit;
+    text-transform: uppercase;
+}
+
+#home-blogs-blur-overlay {
+    /* Container for the React-managed blur overlay - visibility controlled by SectionBlur component */
+}
+
+#home_blogs_blur {
+    position: relative;
 }
 
 .hero_subtext {
@@ -3291,8 +3370,8 @@ a.orange_btn.white_btn span.orenge_icon::before,
         position: absolute;
         top: -96px;
         /* Offset the 96px padding-top of banner_slider_content */
-        left: -35px;
-        /* Offset the 20px padding of banner_slider_content + 15px container gutter */
+        left: 50%;
+        margin-left: -50vw;
         width: 100vw;
         /* Fill full viewport width */
         bottom: -80px;
@@ -5163,6 +5242,12 @@ li.yoga_training_item.active .yoga_training_content {
     display: none;
 }
 
+@media (max-width: 991px) {
+    .home_blog_img.no-image {
+        display: none;
+    }
+}
+
 a.home_blog_btn {
     display: inline-flex;
     width: 60px;
@@ -5332,6 +5417,38 @@ ul.list-inline li a:hover {
     background: rgb(0 0 0 / 30%);
 }
 
+.common_banner_aboutuspage_bg {
+    background: url(../images/About_us/About_us_Hero.png);
+    background-position: center;
+    background-size: cover;
+}
+
+.common_banner_contactuspage_bg {
+    background: none;
+    overflow: hidden;
+}
+
+.common_banner_contactuspage_bg::after {
+    z-index: 1;
+}
+
+.common_banner_contactuspage_bg .container {
+    position: relative;
+    z-index: 2;
+}
+
+.contact-hero-threads,
+.faq-hero-threads,
+.events-hero-threads {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0b1020;
+    pointer-events: none;
+}
+
 /* ============================== 8 AboutUs Page ============================== */
 .about_page_img_area {
     text-align: right;
@@ -5347,6 +5464,24 @@ ul.list-inline li a:hover {
 
 .about_page_img_area>.about_big_img {
     margin-top: 100px;
+}
+
+.about_page_img_area>.about_big_img,
+.about_page_img_area>.about_img_inner {
+    width: 440px;
+    height: 480px;
+}
+
+.about_page_img_area>.about_img_inner {
+    width: 300px;
+    height: 420px;
+}
+
+.about_page_img_area>.about_big_img img,
+.about_page_img_area>.about_img_inner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .about_page_detail_area p {

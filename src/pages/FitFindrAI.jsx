@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 import JSZip from "jszip";
-import { Sparkles, Camera, Video, Loader2, RefreshCcw, Download, Play, Square, Send, Dumbbell, Check } from "lucide-react";
+import { Sparkles, Camera, Loader2, RefreshCcw, Download, Square, Send, Dumbbell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ExerciseSelectorModal from "@/components/fitfindr/ExerciseSelectorModal";
+import { ExerciseImageLightbox } from "@/components/fitfindr/ExerciseImageLightbox";
 import exercises from "@/data/exercises.json";
 
 const getSupportedMimeType = () => {
@@ -17,15 +19,19 @@ const getSupportedMimeType = () => {
   return types.find((type) => MediaRecorder.isTypeSupported(type)) || "";
 };
 
+const MAX_RECORDING_SECONDS = 30;
+
 const REVIEW_COPY = {
-  idle: "No analysis yet. Capture your form and send it for review.",
-  needs_capture: "Capture your form first so we can analyze the pose data.",
-  queued: "Ready to send. Hook this to your backend to run Gemini analysis.",
+  idle: "Capture your form and tap Review to start your AI analysis.",
+  needs_capture: "Record a clip with pose tracking so we can analyze your form.",
+  ready: "AI Form package ready. Tap Review to start the analysis.",
+  packaging: "Preparing your AI package...",
+  sending: "Sending the package to Gemini for analysis...",
+  done: "Analysis complete. Review your feedback below.",
+  error: "Analysis failed. Try again when you're ready.",
 };
 
-const PROMPT_TEXT = `FITFINDER AI ANALYSIS PROMPT (UNIVERSAL)
-
-You are an AI movement and exercise analysis assistant for Fitfinder.
+const PROMPT_TEXT = `You are an AI movement and exercise analysis assistant for Fitfinder.
 
 You will be given a single AI analysis package representing one completed recording session.
 The package is automatically generated after the user stops recording.
@@ -37,91 +43,110 @@ The AI package contains:
 - A user-selected exercise OR a user-typed custom exercise name
 - This prompt file, which defines your behavior
 
-----------------------------------------
-
 YOUR RESPONSIBILITIES
 
-1. IDENTIFY THE EXERCISE
-- Use both:
-  - the user-selected or user-typed exercise name
-  - the observed movement patterns from the video and landmark data
-- If the user selected "Other" and typed a custom exercise:
-  - interpret the exercise based on the provided name and movement evidence
-- If there is a mismatch between user input and observed movement:
-  - prioritize movement evidence
-  - briefly explain the discrepancy in plain language
+IDENTIFY THE EXERCISE
+Use both:
+- the user-selected or user-typed exercise name
+- the observed movement patterns from the video and landmark data
 
-----------------------------------------
+If the user selected "Other" and typed a custom exercise:
+- interpret the exercise based on the provided name and movement evidence
 
-2. ANALYZE MOVEMENT QUALITY
+If there is a mismatch between user input and observed movement:
+- prioritize movement evidence
+- briefly explain the discrepancy in plain language
+
+ALIGN LANDMARKS WITH VIDEO (REQUIRED)
+- Use timestamps and/or frame indices to align landmark data with video frames
+- Identify the exact frame(s) where form breaks down using this alignment
+- Base all critique on the aligned frame(s), not on general impressions
+
+ANALYZE MOVEMENT QUALITY (LANDMARK + VIDEO)
 - Evaluate the movement based on best practices for the identified exercise
-- Focus only on issues that meaningfully affect:
-  - safety
-  - efficiency
-  - performance
+- Use aligned landmarks + corresponding video frames to pinpoint what went wrong
+- Focus only on issues that meaningfully affect safety, efficiency, or performance
 - Ignore minor or cosmetic deviations
 - Use landmark confidence and biomechanical signals to support conclusions
 
-----------------------------------------
+IMAGE LINK REQUIREMENTS
+- Images live under /public/exercises/{Exercise_Folder}/images/ and are served at /exercises/{Exercise_Folder}/images/
+- Use exercise.folder when provided; otherwise use the user-selected exercise name as the folder name
+- Return clickable URLs for the default image files: /exercises/{Exercise_Folder}/images/0.jpg and /exercises/{Exercise_Folder}/images/1.jpg
+- Do not invent other paths or filenames
+- If the exercise is "Other" or the name does not map to a folder, state that no specific exercise images are available
 
-3. LOCATE THE PROBLEM MOMENT (GROUND TRUTH)
-- Identify the specific frame or moment where form breakdown is most evident
-  (e.g. peak load, deepest position, transition phase, loss of balance or alignment)
-- This moment must be supported by landmark data and movement analysis
-- Select one representative frame from the user's video at this moment
+NO SCREENSHOT OR GENERATED IMAGES
+- Do not extract or render any user video frames
+- Do not generate or request images of the user
+- Provide instruction using text and existing exercise reference images only
 
-----------------------------------------
+OUTPUT REQUIREMENTS (CONCISE + USER FRIENDLY)
+Return in this exact order:
 
-4. EXTRACT AND ANNOTATE THE REAL VIDEO FRAME
-- Extract the selected frame directly from the user's video
-- Overlay clear, minimal visual annotations on this image, such as:
-  - lines
-  - arrows
-  - angles
-  - highlights
-- Annotations should clearly show what is incorrect for this exercise
-- This image must be derived from the user's actual video and landmark data
+1) WHAT IS WRONG (SIMPLE)
+- 1-3 short bullets describing the main form issue(s) based on aligned landmarks/video
 
-----------------------------------------
+2) WHERE IT HAPPENS (ALIGNED)
+- 1 short bullet naming the phase or moment (e.g., bottom position, transition, peak load)
+- Mention how the aligned landmarks show the breakdown in that moment
 
-5. EXPLAIN THE ISSUE (SIMPLE LANGUAGE)
-Provide a short, user-friendly explanation that:
-- Describes what is happening in the annotated frame
-- Explains why it matters for this specific exercise
-- Uses plain language without medical or technical jargon
+3) HOW TO FIX IT
+- 1-3 short bullets with the most actionable corrections in plain language
 
-----------------------------------------
+4) EXERCISE IMAGES (CLICKABLE LINKS)
+- Output these URLs on their own lines so they are clickable in chat:
+  - /exercises/{Exercise_Folder}/images/0.jpg
+  - /exercises/{Exercise_Folder}/images/1.jpg
+- Add 1 short sentence describing what is happening in each image
+- Add 1 short line on how to apply each image to fix form
 
-6. GENERATE A CORRECTED EXAMPLE IMAGE
-- Generate a separate example image showing correct form for the same exercise
-- Match the general camera angle and body orientation when possible
-- Overlay simple visual indicators showing correct alignment or movement
-- This image is a generated reference example, not taken from the user's video
+If the exercise is "Other" or no images exist for the chosen exercise:
+- State that no specific exercise images are available
+- Still provide the same text advice above
 
-----------------------------------------
+5) REFERENCE LINK (EXRX)
+- Provide the exact ExRx link for the identified exercise
 
-7. EXPLAIN THE CORRECTION
-Briefly explain:
-- Why the corrected example is better than the user's form
-- What the user should focus on during their next attempt
-- One or two simple, actionable cues
+6) YOUTUBE REFERENCE
+- Provide a YouTube link from a reputable channel specific to the exercise
+- Prefer Bodybuilding.com
+- If no specific match exists, choose the closest reputable alternative
+- If the exercise is "Other", choose the closest reputable match to the user-typed exercise
 
-----------------------------------------
-
-OUTPUT REQUIREMENTS
-- Feedback must be concise, supportive, and actionable
-- Visuals must be instructional, not decorative
-- Clearly distinguish between:
-  - the annotated real screenshot (from the user's video)
-  - the generated correct-form example image
-- Assume the user has no biomechanics background
+7) IF NO VIDEO FOUND
+- Ask the user to briefly describe or provide more details about the exercise so you can provide a better visual resource
 
 Your goal is to help the user immediately understand:
 - what went wrong
-- why it matters
+- where it happens
 - how to fix it
+- where to see a clear example`;
 
-END PROMPT`;
+const Typewriter = ({ text, className, speed = 15, onComplete }) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    // Reset if text changes
+    setDisplayedText("");
+    setIndex(0);
+  }, [text]);
+
+  useEffect(() => {
+    if (index < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText((prev) => prev + text[index]);
+        setIndex((prev) => prev + 1);
+      }, speed);
+      return () => clearTimeout(timeout);
+    } else if (onComplete) {
+      onComplete();
+    }
+  }, [index, text, speed, onComplete]);
+
+  return <p className={className}>{displayedText}</p>;
+};
 
 export default function FitFindrAI() {
   const videoRef = useRef(null);
@@ -140,6 +165,7 @@ export default function FitFindrAI() {
     lastCaptureTime: -Infinity,
   });
   const isRecordingRef = useRef(false);
+  const recordingTimeoutRef = useRef(null);
 
   const [showIntro, setShowIntro] = useState(true);
   const [facingMode, setFacingMode] = useState("user");
@@ -152,11 +178,16 @@ export default function FitFindrAI() {
   const [poseStatus, setPoseStatus] = useState("idle");
   const [poseError, setPoseError] = useState("");
   const [landmarks, setLandmarks] = useState([]);
-  const [reviewStatus, setReviewStatus] = useState("idle");
+  const [analysisStatus, setAnalysisStatus] = useState("idle");
+  const [analysisText, setAnalysisText] = useState("");
+  const [analysisError, setAnalysisError] = useState("");
+  const [analysisRequest, setAnalysisRequest] = useState("");
   const [captureCount, setCaptureCount] = useState(0);
-  const [downloadError, setDownloadError] = useState("");
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [exerciseSelection, setExerciseSelection] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [chatSequence, setChatSequence] = useState("idle"); // 'idle', 'user', 'loading', 'complete'
+  const [isTypewriterComplete, setIsTypewriterComplete] = useState(false);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768
   );
@@ -170,6 +201,22 @@ export default function FitFindrAI() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Handle exercise selection chat sequence
+  useEffect(() => {
+    if (exerciseSelection) {
+      setChatSequence("user");
+      setIsTypewriterComplete(false);
+      const typingTimer = setTimeout(() => setChatSequence("loading"), 600);
+      const completeTimer = setTimeout(() => setChatSequence("complete"), 2200);
+      return () => {
+        clearTimeout(typingTimer);
+        clearTimeout(completeTimer);
+      };
+    } else {
+      setChatSequence("idle");
+    }
+  }, [exerciseSelection]);
+
   const stopStream = ({ shouldSaveRecording = true, shouldUpdateState = true } = {}) => {
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
       if (!shouldSaveRecording) {
@@ -177,6 +224,10 @@ export default function FitFindrAI() {
         recorderRef.current.onstop = null;
       }
       recorderRef.current.stop();
+    }
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
     }
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
@@ -194,6 +245,13 @@ export default function FitFindrAI() {
     if (ctx) {
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
+  };
+
+  const buildAnalysisRequest = () => {
+    if (exerciseSelection?.name) {
+      return `Analyze my ${exerciseSelection.name} form.`;
+    }
+    return "Analyze my form.";
   };
 
   const stopPose = () => {
@@ -307,7 +365,10 @@ export default function FitFindrAI() {
       return;
     }
     setErrorMessage("");
-    setDownloadError("");
+    setAnalysisError("");
+    setAnalysisText("");
+    setAnalysisStatus("idle");
+    setAnalysisRequest("");
     framesRef.current = [];
     setCaptureCount(0);
     recordedBlobRef.current = null;
@@ -318,6 +379,7 @@ export default function FitFindrAI() {
       width: videoRef.current?.videoWidth || null,
       height: videoRef.current?.videoHeight || null,
       facingMode,
+      maxDurationSeconds: MAX_RECORDING_SECONDS,
     };
     if (recordedUrl) {
       URL.revokeObjectURL(recordedUrl);
@@ -346,11 +408,21 @@ export default function FitFindrAI() {
     recorder.start();
     recorderRef.current = recorder;
     setIsRecording(true);
+    recordingTimeoutRef.current = setTimeout(() => {
+      if (recorderRef.current && recorderRef.current.state === "recording") {
+        setErrorMessage(`Recording stopped at ${MAX_RECORDING_SECONDS} seconds.`);
+        stopRecording();
+      }
+    }, MAX_RECORDING_SECONDS * 1000);
   };
 
   const stopRecording = () => {
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
       recorderRef.current.stop();
+    }
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
     }
     setIsRecording(false);
   };
@@ -358,6 +430,12 @@ export default function FitFindrAI() {
   useEffect(() => {
     isRecordingRef.current = isRecording;
   }, [isRecording]);
+
+  useEffect(() => {
+    if (recordedUrl && captureCount > 0 && analysisStatus === "needs_capture") {
+      setAnalysisStatus("idle");
+    }
+  }, [recordedUrl, captureCount, analysisStatus]);
 
   const handleContinue = async () => {
     setShowIntro(false);
@@ -369,30 +447,41 @@ export default function FitFindrAI() {
     await startCamera({ nextFacingMode: facingMode, autoStartPose: true });
   };
 
-  const handleSendForReview = () => {
-    setShowIntro(false);
-    if (!landmarks.length && !recordedUrl) {
-      setReviewStatus("needs_capture");
-      return;
-    }
-    setReviewStatus("queued");
-  };
-
-  const handleDownloadPackage = async () => {
-    setDownloadError("");
+  const buildAiPackage = async () => {
     if (!recordedBlobRef.current) {
-      setDownloadError("Record a clip before downloading the AI package.");
-      return;
+      throw new Error("Record a clip before requesting an analysis.");
     }
     if (!framesRef.current.length) {
-      setDownloadError("No landmark data captured yet. Record with pose tracking on.");
-      return;
+      throw new Error("No landmark data captured yet. Record with pose tracking on.");
     }
 
     const extension = recordedType.includes("mp4") ? "mp4" : "webm";
+    const imageFolder =
+      exerciseSelection?.source === "list" ? exerciseSelection.id : null;
+    const durationSeconds =
+      framesRef.current.length > 1
+        ? Number(
+          (framesRef.current[framesRef.current.length - 1].t - framesRef.current[0].t).toFixed(3)
+        )
+        : 0;
+    if (durationSeconds > MAX_RECORDING_SECONDS + 0.5) {
+      throw new Error(`Recording exceeds ${MAX_RECORDING_SECONDS} seconds. Please retry with a shorter clip.`);
+    }
+
     const payload = {
       exercise: exerciseSelection
-        ? { source: exerciseSelection.source, name: exerciseSelection.name }
+        ? {
+          source: exerciseSelection.source,
+          name: exerciseSelection.name,
+          id: exerciseSelection.id || null,
+          folder: imageFolder,
+          image_urls: imageFolder
+            ? [
+              `/exercises/${imageFolder}/images/0.jpg`,
+              `/exercises/${imageFolder}/images/1.jpg`,
+            ]
+            : [],
+        }
         : null,
       camera: {
         facingMode,
@@ -400,10 +489,19 @@ export default function FitFindrAI() {
         height: captureMetaRef.current.height,
         fps: captureMetaRef.current.fps,
       },
+      video: {
+        filename: `video.${extension}`,
+        mimeType:
+          recordedBlobRef.current.type ||
+          (extension === "mp4" ? "video/mp4" : "video/webm"),
+        durationSeconds,
+      },
       capture: {
         startedAt: captureMetaRef.current.startedAt,
         landmarkCount: framesRef.current.length,
         normalizedCoordinates: true,
+        durationSeconds,
+        maxDurationSeconds: MAX_RECORDING_SECONDS,
       },
       frames: framesRef.current,
     };
@@ -412,24 +510,55 @@ export default function FitFindrAI() {
       prompt: PROMPT_TEXT,
     };
 
-    try {
-      const zip = new JSZip();
-      zip.file(`video.${extension}`, recordedBlobRef.current);
-      zip.file("landmarks.json", JSON.stringify(payload, null, 2));
-      zip.file("prompt.json", JSON.stringify(prompt, null, 2));
+    const zip = new JSZip();
+    zip.file(`video.${extension}`, recordedBlobRef.current);
+    zip.file("landmarks.json", JSON.stringify(payload, null, 2));
+    zip.file("prompt.json", JSON.stringify(prompt, null, 2));
 
-      const blob = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "fitfindr-ai-package.zip";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
+    return zip.generateAsync({ type: "blob" });
+  };
+
+  const handleSendForReview = async () => {
+    setShowIntro(false);
+    setAnalysisError("");
+    const requestText = buildAnalysisRequest();
+    setAnalysisRequest(requestText);
+
+    if (!recordedBlobRef.current || !framesRef.current.length) {
+      setAnalysisStatus("needs_capture");
+      return;
+    }
+
+    setAnalysisStatus("packaging");
+    setAnalysisText("");
+
+    try {
+      const packageBlob = await buildAiPackage();
+      const formData = new FormData();
+      formData.append("package", packageBlob, "fitfindr-ai-package.zip");
+
+      setAnalysisStatus("sending");
+      const response = await fetch("/api/ai/interpret", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Analysis failed. Please try again.");
+      }
+
+      const responseText = data.text?.trim();
+      if (!responseText) {
+        throw new Error("No analysis text returned. Try again.");
+      }
+
+      const noteText = data.note ? `Note: ${data.note}\n\n` : "";
+      setAnalysisText(`${noteText}${responseText}`);
+      setAnalysisStatus("done");
     } catch (error) {
       console.error(error);
-      setDownloadError("Package creation failed. Try again.");
+      setAnalysisError(error.message || "Analysis failed. Try again.");
+      setAnalysisStatus("error");
     }
   };
 
@@ -529,7 +658,10 @@ export default function FitFindrAI() {
     };
   }, [poseStatus]);
 
-  const canDownloadPackage = Boolean(recordedUrl && captureCount > 0);
+  const isPackageReady = Boolean(recordedUrl && captureCount > 0);
+  const displayStatus =
+    isPackageReady && analysisStatus === "idle" ? "ready" : analysisStatus;
+  const isReviewBusy = analysisStatus === "packaging" || analysisStatus === "sending";
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -694,16 +826,16 @@ export default function FitFindrAI() {
                 {poseError}
               </div>
             )}
-            {downloadError && (
+            {analysisError && (
               <div className="mb-4 rounded-2xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-xs text-blue-200">
-                {downloadError}
+                {analysisError}
               </div>
             )}
 
             <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
               <div>
                 <h2 className="text-lg font-black">AI Interpretation</h2>
-                <p className="mt-2 text-sm text-slate-400">{REVIEW_COPY[reviewStatus]}</p>
+                <p className="mt-2 text-sm text-slate-400">{REVIEW_COPY[displayStatus]}</p>
                 <p className="mt-2 text-xs text-slate-500">Captured frames: {captureCount}</p>
 
                 {poseStatus === "running" && landmarks.length > 0 && (
@@ -718,6 +850,154 @@ export default function FitFindrAI() {
                           x:{point.x.toFixed(3)} y:{point.y.toFixed(3)} z:{point.z.toFixed(3)}
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+                {exerciseSelection && (
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={exerciseSelection.id || exerciseSelection.name}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="mt-4 space-y-3"
+                    >
+                      {/* User Request */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"
+                      >
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">You</p>
+                        <p className="text-sm text-slate-200">Help me with {exerciseSelection.name}</p>
+                      </motion.div>
+
+                      {/* AI Response or Typing */}
+                      {(chatSequence === "loading" || chatSequence === "complete") && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4 }}
+                          className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4"
+                        >
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-300 mb-2">
+                            FitFindr AI
+                          </p>
+
+                          {chatSequence === "loading" ? (
+                            <div className="flex gap-1.5 py-2">
+                              <motion.div
+                                animate={{ opacity: [0.4, 1, 0.4] }}
+                                transition={{ repeat: Infinity, duration: 1, delay: 0 }}
+                                className="h-1.5 w-1.5 rounded-full bg-blue-400"
+                              />
+                              <motion.div
+                                animate={{ opacity: [0.4, 1, 0.4] }}
+                                transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
+                                className="h-1.5 w-1.5 rounded-full bg-blue-400"
+                              />
+                              <motion.div
+                                animate={{ opacity: [0.4, 1, 0.4] }}
+                                transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
+                                className="h-1.5 w-1.5 rounded-full bg-blue-400"
+                              />
+                            </div>
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Typewriter
+                                text={`Welcome to FitFinder AI! You selected ${exerciseSelection.name} — great choice!`}
+                                className="text-sm text-blue-50 mb-3"
+                                speed={20}
+                                onComplete={() => setIsTypewriterComplete(true)}
+                              />
+
+                              {isTypewriterComplete && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.5 }}
+                                >
+                                  {exerciseSelection.source === "list" ? (
+                                    <>
+                                      <p className="text-sm text-blue-100/80 mb-3">
+                                        Here are the example images for this exercise:
+                                      </p>
+                                      <div className="flex flex-wrap gap-2 mb-3">
+                                        <button
+                                          onClick={() =>
+                                            setLightboxImage({
+                                              url: `/exercises/${exerciseSelection.id}/images/0.jpg`,
+                                              title: "Starting Position",
+                                            })
+                                          }
+                                          className="flex items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/20 px-3 py-2 text-xs font-bold text-blue-100 hover:bg-blue-500/30 transition-all"
+                                        >
+                                          📷 Starting Position
+                                        </button>
+                                        <button
+                                          onClick={() =>
+                                            setLightboxImage({
+                                              url: `/exercises/${exerciseSelection.id}/images/1.jpg`,
+                                              title: "End Position",
+                                            })
+                                          }
+                                          className="flex items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/20 px-3 py-2 text-xs font-bold text-blue-100 hover:bg-blue-500/30 transition-all"
+                                        >
+                                          📷 End Position
+                                        </button>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <p className="text-xs text-blue-200/60 italic mb-3">
+                                      No specific images available for custom exercises.
+                                    </p>
+                                  )}
+
+                                  <p className="text-[10px] uppercase tracking-widest text-blue-200/40 font-bold">
+                                    Record your form and tap "Review" when ready.
+                                  </p>
+                                </motion.div>
+                              )}
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                )}
+
+                {(analysisStatus !== "idle" || analysisText || analysisError) && (
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">You</p>
+                      <p className="text-sm text-slate-200">{analysisRequest || buildAnalysisRequest()}</p>
+                    </div>
+                    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-300 mb-2">
+                        FitFindr AI
+                      </p>
+                      {isReviewBusy && (
+                        <div className="flex items-center gap-2 text-sm text-blue-100">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Reviewing your form...
+                        </div>
+                      )}
+                      {!isReviewBusy && analysisText && (
+                        <p className="text-sm text-blue-50 whitespace-pre-wrap">{analysisText}</p>
+                      )}
+                      {!isReviewBusy && !analysisText && analysisStatus === "needs_capture" && (
+                        <p className="text-sm text-blue-100">
+                          Record a clip with pose tracking so the AI can analyze your form.
+                        </p>
+                      )}
+                      {!isReviewBusy && !analysisText && analysisStatus === "error" && (
+                        <p className="text-sm text-blue-100">{analysisError || "Analysis failed. Try again."}</p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -774,22 +1054,28 @@ export default function FitFindrAI() {
                         )}
                       </Button>
 
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
+                        {isPackageReady && (
+                          <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-200">
+                            AI Form package ready
+                          </div>
+                        )}
                         <Button
                           onClick={handleSendForReview}
-                          disabled={!landmarks.length && !recordedUrl}
+                          disabled={!isPackageReady || isReviewBusy}
                           className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
                         >
-                          <Send className="h-3.5 w-3.5 mr-1.5" />
-                          Review
-                        </Button>
-                        <Button
-                          onClick={handleDownloadPackage}
-                          disabled={!canDownloadPackage}
-                          className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
-                        >
-                          <Download className="h-3.5 w-3.5 mr-1.5" />
-                          Package
+                          {isReviewBusy ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Reviewing...
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5">
+                              <Send className="h-3.5 w-3.5" />
+                              Review
+                            </span>
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -884,6 +1170,12 @@ export default function FitFindrAI() {
                         Actions
                       </p>
 
+                      {isPackageReady && (
+                        <div className="mb-3 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-200">
+                          AI Form package ready
+                        </div>
+                      )}
+
                       <Button
                         onClick={handleContinue}
                         disabled={isStarting}
@@ -905,19 +1197,20 @@ export default function FitFindrAI() {
                       <div className="flex gap-3">
                         <Button
                           onClick={handleSendForReview}
-                          disabled={!landmarks.length && !recordedUrl}
+                          disabled={!isPackageReady || isReviewBusy}
                           className="flex-1 h-12 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
                         >
-                          <Send className="h-4 w-4 mr-2" />
-                          Review
-                        </Button>
-                        <Button
-                          onClick={handleDownloadPackage}
-                          disabled={!canDownloadPackage}
-                          className="flex-1 h-12 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          AI Package
+                          {isReviewBusy ? (
+                            <span className="inline-flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Reviewing...
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-2">
+                              <Send className="h-4 w-4" />
+                              Review
+                            </span>
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -945,6 +1238,11 @@ export default function FitFindrAI() {
           </div>
         </div>
       </div>
+
+      <ExerciseImageLightbox
+        image={lightboxImage}
+        onClose={() => setLightboxImage(null)}
+      />
     </div>
   );
 }

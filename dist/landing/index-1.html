@@ -1214,26 +1214,77 @@
             const FEED_REFRESH_MS = 4 * 60 * 60 * 1000
             const homeBlogsSection = document.getElementById("home_blogs_v1")
             const feeds = [
-                "https://www.nerdfitness.com/feed/",
+                "https://feeds.feedburner.com/acefitness/fitnovatives",
                 "https://athletechnews.com/category/tech/feed/",
                 "https://blog.myfitnesspal.com/feed/",
             ]
 
             const lastSeenArticleLinks = new Map()
 
-            const fetchFeed = async (url) => {
-                const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`
-                try {
-                    const response = await fetch(proxiedUrl)
-                    if (response.ok) return response.text()
-                    console.warn(`Proxy feed fetch returned ${response.status} for ${url}`)
-                } catch (error) {
-                    console.warn("Proxy feed fetch failed, retrying direct:", error)
+            const buildFeedCandidates = (url) => [
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://r.jina.ai/http://${url.replace(/^https?:\/\//, "")}`,
+                url,
+            ]
+
+            const extractFeedFromMarkdown = (text) => {
+                const markdownStart = text.split("Markdown Content:")[1] || text
+                const itemMatches = Array.from(
+                    markdownStart.matchAll(/([^\n]+)\n=+\n([\s\S]*?)(https?:\/\/\S+)/g)
+                )
+
+                for (const match of itemMatches) {
+                    const title = match[1].trim().replace(/^ACE Insights Blog\s*/i, "")
+                    const excerpt = match[2].replace(/\s+/g, " ").trim()
+                    const link = match[3].trim()
+                    if (!/\/expert-articles\/\d+/.test(link)) continue
+
+                    return {
+                        title,
+                        link,
+                        excerpt,
+                    }
                 }
 
-                const fallbackResponse = await fetch(url)
-                if (!fallbackResponse.ok) throw new Error(`Unable to fetch feed: ${url}`)
-                return fallbackResponse.text()
+                return null
+            }
+
+            const fetchFeedDocument = async (url) => {
+                const candidates = buildFeedCandidates(url)
+                let lastError = null
+
+                for (const candidate of candidates) {
+                    try {
+                        const response = await fetch(candidate)
+                        if (!response.ok) {
+                            lastError = new Error(`Feed fetch returned ${response.status} for ${candidate}`)
+                            continue
+                        }
+
+                        const text = await response.text()
+                        if (candidate.includes("r.jina.ai/http://")) {
+                            const fallbackItem = extractFeedFromMarkdown(text)
+                            if (fallbackItem) {
+                                return { format: "markdown", item: fallbackItem }
+                            }
+                            lastError = new Error(`Feed markdown parse failed for ${candidate}`)
+                            continue
+                        }
+
+                        const parsed = new DOMParser().parseFromString(text, "text/xml")
+                        if (parsed.querySelector("parsererror")) {
+                            lastError = new Error(`Feed XML parse failed for ${candidate}`)
+                            continue
+                        }
+
+                        return { format: "xml", doc: parsed }
+                    } catch (error) {
+                        lastError = error
+                    }
+                }
+
+                throw lastError || new Error(`Unable to fetch feed: ${url}`)
             }
 
             const extractImage = (item) => {
@@ -1267,6 +1318,13 @@
             const extractText = (item, tag) => {
                 const node = item.getElementsByTagName(tag)[0] || item.querySelector(tag)
                 return node?.textContent?.trim() || ""
+            }
+
+            const extractLink = (item) => {
+                const linkNode = item.querySelector("link[rel='alternate']") || item.querySelector("link")
+                const linkHref = linkNode?.getAttribute("href")?.trim()
+                if (linkHref) return linkHref
+                return extractText(item, "link")
             }
 
             const formatDate = (value) => {
@@ -1324,16 +1382,36 @@
                         if (!targetCard) return
 
                         try {
-                            const xml = await fetchFeed(feedUrl)
-                            const documentXml = new DOMParser().parseFromString(xml, "text/xml")
-                            const items = Array.from(documentXml.querySelectorAll("channel > item, item"))
+                            const feedResult = await fetchFeedDocument(feedUrl)
+
+                            if (feedResult.format === "markdown") {
+                                const { item } = feedResult
+                                const lastSeenLink = lastSeenArticleLinks.get(feedUrl)
+                                if (lastSeenLink === item.link) {
+                                    console.warn(`No new items for ${feedUrl}; retaining current card content`)
+                                    return
+                                }
+
+                                updateCard(targetCard, {
+                                    title: item.title,
+                                    link: item.link,
+                                    date: "",
+                                    excerpt: buildExcerpt(item.excerpt),
+                                    image: "",
+                                })
+
+                                lastSeenArticleLinks.set(feedUrl, item.link)
+                                return
+                            }
+
+                            const items = Array.from(feedResult.doc.querySelectorAll("channel > item, item, entry"))
                             const firstItem = items.find((item) => !!item)
                             if (!firstItem) {
                                 console.warn(`No feed items found for ${feedUrl}`)
                                 return
                             }
 
-                            const articleLink = extractText(firstItem, "link")
+                            const articleLink = extractLink(firstItem)
                             const lastSeenLink = lastSeenArticleLinks.get(feedUrl)
                             if (lastSeenLink === articleLink) {
                                 // Retain the current article on the card when the feed hasn't published anything new.
@@ -1343,13 +1421,20 @@
 
                             const title = extractText(firstItem, "title")
                             const rawContent =
-                                extractText(firstItem, "content:encoded") || extractText(firstItem, "description")
+                                extractText(firstItem, "content:encoded") ||
+                                extractText(firstItem, "description") ||
+                                extractText(firstItem, "content") ||
+                                extractText(firstItem, "summary")
                             const image = extractImage(firstItem)
+                            const dateValue =
+                                extractText(firstItem, "pubDate") ||
+                                extractText(firstItem, "updated") ||
+                                extractText(firstItem, "published")
 
                             updateCard(targetCard, {
                                 title,
                                 link: articleLink,
-                                date: formatDate(extractText(firstItem, "pubDate")),
+                                date: formatDate(dateValue),
                                 excerpt: buildExcerpt(rawContent),
                                 image,
                             })
