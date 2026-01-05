@@ -721,25 +721,25 @@ export default function FitFindrAI() {
               </div>
             )}
 
-            <div className="absolute inset-x-0 top-4 flex flex-wrap items-center justify-between gap-3 px-4">
-              <div className="inline-flex items-center gap-2 rounded-[2rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl px-4 py-2.5 text-xs font-bold uppercase tracking-[0.2em] text-white shadow-lg">
-                <Sparkles className="h-4 w-4 text-blue-400" />
+            <div className={`absolute inset-x-0 top-4 flex items-center justify-between px-4 ${isMobile ? 'flex-nowrap gap-2' : 'flex-wrap gap-3'}`}>
+              <div className={`inline-flex items-center rounded-[2rem] border border-white/10 bg-slate-900/80 backdrop-blur-xl text-white shadow-lg ${isMobile ? 'gap-1.5 px-3 py-2 text-[10px] tracking-widest' : 'gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.2em]'}`}>
+                <Sparkles className={`${isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-blue-400`} />
                 FitFindr AI
               </div>
-              <div className="flex items-center gap-2">
+              <div className={`flex items-center ${isMobile ? 'gap-1.5' : 'gap-2'}`}>
                 <Button
                   size="sm"
                   onClick={handleSwitchCamera}
                   disabled={!isCameraOn || isStarting}
-                  className="h-10 px-4 rounded-[2rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                  className={`rounded-[2rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white font-bold uppercase hover:bg-white/10 transition-all ${isMobile ? 'h-9 px-3 text-[10px] tracking-wider' : 'h-10 px-4 text-xs tracking-widest'}`}
                 >
-                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  <RefreshCcw className={`${isMobile ? 'h-3.5 w-3.5 mr-1.5' : 'h-4 w-4 mr-2'}`} />
                   Switch
                 </Button>
                 <Button
                   size="sm"
                   onClick={isCameraOn ? stopCamera : () => startCamera({ nextFacingMode: facingMode, autoStartPose: true })}
-                  className="h-10 px-6 rounded-[2rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center min-w-[120px]"
+                  className={`rounded-[2rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 text-white font-bold uppercase hover:bg-white/10 transition-all flex items-center justify-center ${isMobile ? 'h-9 px-4 text-[10px] tracking-wider min-w-[100px]' : 'h-10 px-6 text-xs tracking-widest min-w-[120px]'}`}
                 >
                   <BlurText
                     key={isCameraOn ? "on" : "off"}
