@@ -146,7 +146,7 @@ const ExerciseSelectorModal = ({ isOpen, onClose, onConfirm, exercises, initialS
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        className="flex h-[85vh] w-full max-w-2xl flex-col rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl shadow-2xl sm:h-[80vh]"
+        className="flex h-[85dvh] w-full max-w-2xl flex-col rounded-t-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl shadow-2xl sm:h-[80vh]"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/5">
@@ -223,8 +223,8 @@ const ExerciseSelectorModal = ({ isOpen, onClose, onConfirm, exercises, initialS
                                     setCustomName("");
                                   }}
                                   className={`flex w-full items-center justify-between rounded-[1.2rem] px-4 py-3 text-left transition-all ${isSelected
-                                      ? "bg-blue-600 shadow-lg shadow-blue-900/20"
-                                      : "hover:bg-white/5 text-slate-300 hover:text-white"
+                                    ? "bg-blue-600 shadow-lg shadow-blue-900/20"
+                                    : "hover:bg-white/5 text-slate-300 hover:text-white"
                                     }`}
                                 >
                                   <span className={`text-sm font-bold ${isSelected ? 'text-white' : ''}`}>{exercise.name}</span>

@@ -92,7 +92,7 @@ export default function Calendar() {
           key={currentDay.toISOString()}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`min-h-[140px] p-4 border border-white/5 cursor-pointer transition-all duration-300 relative group overflow-hidden ${isCurrentMonth ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-900/30 opacity-40 hover:opacity-100'
+          className={`min-h-[80px] sm:min-h-[140px] p-2 sm:p-4 border border-white/5 cursor-pointer transition-all duration-300 relative group overflow-hidden ${isCurrentMonth ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-900/30 opacity-40 hover:opacity-100'
             } ${isDayToday ? 'ring-2 ring-blue-500/50 bg-blue-500/5' : ''}`}
           onClick={() => setSelectedDate(currentDay)}
         >
@@ -136,15 +136,15 @@ export default function Calendar() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white selection:bg-blue-500/30">
+    <div className="min-h-[100dvh] bg-slate-950 text-white selection:bg-blue-500/30">
 
-      <main className="max-w-7xl mx-auto px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12">
           {/* Main Calendar Card */}
           <div className="lg:col-span-2 space-y-8">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-4xl font-black text-white tracking-tight mb-2">My Matchups</h2>
+                <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">My Matchups</h2>
                 <p className="text-slate-400 font-medium capitalize">{format(currentDate, 'MMMM yyyy')}</p>
               </div>
               <div className="flex items-center gap-3 bg-white/5 p-1.5 rounded-2xl border border-white/10">
@@ -178,12 +178,13 @@ export default function Calendar() {
             <div className="bg-slate-900/50 backdrop-blur-xl rounded-[3rem] border border-white/10 overflow-hidden shadow-2xl">
               <div className="grid grid-cols-7 border-b border-white/5 bg-white/5">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="py-6 text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                    {day}
+                  <div key={day} className="py-3 sm:py-6 text-center text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] sm:tracking-[0.2em]">
+                    <span className="hidden sm:inline">{day}</span>
+                    <span className="sm:hidden">{day.charAt(0)}</span>
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 glass-scrollbar overflow-y-auto max-h-[700px]">
+              <div className="grid grid-cols-7 glass-scrollbar overflow-y-auto max-h-[50dvh] sm:max-h-[700px]">
                 {isLoading ? (
                   Array.from({ length: 35 }).map((_, i) => (
                     <div key={i} className="min-h-[140px] p-4 border border-white/5 bg-white/5 animate-pulse" />
@@ -221,7 +222,7 @@ export default function Calendar() {
       {/* Selected Day Dialog */}
       <AnimatePresence>
         {selectedDate && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-8">
+          <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-4 sm:p-8">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -233,9 +234,9 @@ export default function Calendar() {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl"
+              className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-t-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl max-h-[85dvh] sm:max-h-none"
             >
-              <div className="p-10">
+              <div className="p-6 sm:p-10">
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h3 className="text-3xl font-black text-white tracking-tight leading-none mb-1">

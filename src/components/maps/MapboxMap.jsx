@@ -191,7 +191,10 @@ const MapboxMap = forwardRef(({
       return;
     }
 
-    mapRef.current.addControl(new mapboxgl.NavigationControl({ showCompass: true }), "top-right");
+    // Only add navigation controls on desktop screens
+    if (window.innerWidth >= 768) {
+      mapRef.current.addControl(new mapboxgl.NavigationControl({ showCompass: true }), "top-right");
+    }
 
     // #region agent log - Event handlers
     mapRef.current.on('error', (e) => {

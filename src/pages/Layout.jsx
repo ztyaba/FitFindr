@@ -30,8 +30,9 @@ const navigationItems = [
 ];
 
 // Convert navigation items to StaggeredMenu format
+// Use shorter labels for mobile-friendly display
 const menuItems = navigationItems.map(item => ({
-  label: item.title,
+  label: item.title === 'Find Professionals' ? 'FIND A PRO' : item.title,
   ariaLabel: `Navigate to ${item.title}`,
   link: item.url
 }));

@@ -3172,12 +3172,19 @@
 
     /* Our-Progress */
     .our_progress_area>.row {
-        gap: 30px;
+        gap: 60px;
     }
 
     .our_progress_box {
         grid-template-columns: 100%;
         gap: 0;
+    }
+
+    .progress_img {
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .progress_img::before {
@@ -3193,6 +3200,10 @@
         width: 0;
     }
 
+
+    .progress_step_info h5 {
+        margin-top: 35px !important;
+    }
     .our_progress_area_v2>.row,
     .smarter_exercise>.container>.row,
     .we_offer_area>.row,

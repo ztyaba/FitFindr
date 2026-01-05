@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import ExerciseSelectorModal from "@/components/fitfindr/ExerciseSelectorModal";
 import { ExerciseImageLightbox } from "@/components/fitfindr/ExerciseImageLightbox";
 import exercises from "@/data/exercises.json";
+import BlurText from "@/components/react-bits/BlurText";
 
 const getSupportedMimeType = () => {
   if (typeof MediaRecorder === "undefined") return "";
@@ -123,30 +124,7 @@ Your goal is to help the user immediately understand:
 - how to fix it
 - where to see a clear example`;
 
-const Typewriter = ({ text, className, speed = 15, onComplete }) => {
-  const [displayedText, setDisplayedText] = useState("");
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    // Reset if text changes
-    setDisplayedText("");
-    setIndex(0);
-  }, [text]);
-
-  useEffect(() => {
-    if (index < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedText((prev) => prev + text[index]);
-        setIndex((prev) => prev + 1);
-      }, speed);
-      return () => clearTimeout(timeout);
-    } else if (onComplete) {
-      onComplete();
-    }
-  }, [index, text, speed, onComplete]);
-
-  return <p className={className}>{displayedText}</p>;
-};
+// Typewriter replaced with BlurText component for better mobile performance
 
 export default function FitFindrAI() {
   const videoRef = useRef(null);
@@ -666,8 +644,8 @@ export default function FitFindrAI() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {showIntro && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl px-6">
-          <div className="w-full max-w-md rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl p-8 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl px-4 sm:px-6 py-safe">
+          <div className="w-full max-w-md rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 bg-slate-900/90 backdrop-blur-2xl p-6 sm:p-8 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.5)] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-blue-500/20 border border-blue-500/30">
                 <Sparkles className="h-7 w-7 text-blue-400" />
@@ -708,9 +686,9 @@ export default function FitFindrAI() {
         initialSelection={exerciseSelection}
       />
 
-      <div className="flex min-h-screen flex-col overflow-hidden">
+      <div className="flex min-h-[100dvh] flex-col overflow-hidden">
         <div className={`bg-slate-950 ${isMobile ? 'px-0 pb-0 pt-0' : 'px-4 pb-6 pt-6'}`}>
-          <div className={`relative mx-auto w-full overflow-hidden border border-white/10 bg-slate-950 ${isMobile ? 'h-[55vh] rounded-none' : 'h-[52vh] max-w-5xl rounded-[2.5rem] sm:h-[58vh] lg:h-[62vh]'}`}>
+          <div className={`relative mx-auto w-full overflow-hidden border border-white/10 bg-slate-950 ${isMobile ? 'h-[50dvh] rounded-none' : 'h-[52vh] max-w-5xl rounded-[2.5rem] sm:h-[58vh] lg:h-[62vh]'}`}>
             <video
               ref={videoRef}
               className="h-full w-full object-cover"
@@ -870,7 +848,13 @@ export default function FitFindrAI() {
                         className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"
                       >
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">You</p>
-                        <p className="text-sm text-slate-200">Help me with {exerciseSelection.name}</p>
+                        <BlurText
+                          text={`Help me with ${exerciseSelection.name}`}
+                          className="text-sm text-slate-200"
+                          delay={40}
+                          animateBy="words"
+                          direction="top"
+                        />
                       </motion.div>
 
                       {/* AI Response or Typing */}
@@ -909,11 +893,13 @@ export default function FitFindrAI() {
                               animate={{ opacity: 1 }}
                               transition={{ duration: 0.3 }}
                             >
-                              <Typewriter
+                              <BlurText
                                 text={`Welcome to FitFinder AI! You selected ${exerciseSelection.name} — great choice!`}
                                 className="text-sm text-blue-50 mb-3"
-                                speed={20}
-                                onComplete={() => setIsTypewriterComplete(true)}
+                                delay={50}
+                                animateBy="words"
+                                direction="top"
+                                onAnimationComplete={() => setIsTypewriterComplete(true)}
                               />
 
                               {isTypewriterComplete && (
@@ -1060,23 +1046,28 @@ export default function FitFindrAI() {
                             AI Form package ready
                           </div>
                         )}
-                        <Button
-                          onClick={handleSendForReview}
-                          disabled={!isPackageReady || isReviewBusy}
-                          className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
-                        >
-                          {isReviewBusy ? (
-                            <span className="inline-flex items-center gap-1.5">
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              Reviewing...
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5">
-                              <Send className="h-3.5 w-3.5" />
-                              Review
-                            </span>
-                          )}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={handleSendForReview}
+                            disabled
+                            className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {isReviewBusy ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                Reviewing...
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Send className="h-3.5 w-3.5" />
+                                Review
+                              </span>
+                            )}
+                          </Button>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">
+                            Coming soon
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1195,23 +1186,28 @@ export default function FitFindrAI() {
                       </Button>
 
                       <div className="flex gap-3">
-                        <Button
-                          onClick={handleSendForReview}
-                          disabled={!isPackageReady || isReviewBusy}
-                          className="flex-1 h-12 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-40"
-                        >
-                          {isReviewBusy ? (
-                            <span className="inline-flex items-center gap-2">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Reviewing...
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-2">
-                              <Send className="h-4 w-4" />
-                              Review
-                            </span>
-                          )}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={handleSendForReview}
+                            disabled
+                            className="flex-1 h-12 rounded-[1.5rem] bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {isReviewBusy ? (
+                              <span className="inline-flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Reviewing...
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-2">
+                                <Send className="h-4 w-4" />
+                                Review
+                              </span>
+                            )}
+                          </Button>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">
+                            Coming soon
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </>

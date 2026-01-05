@@ -551,7 +551,7 @@ export default function Versus() {
         aria-label="Primary"
       >
         {navigationItems.map((item) => {
-          const isActive = item.url.includes("Versus");
+          const isActive = location.pathname === item.url;
           return (
             <Link
               key={item.title}
@@ -970,7 +970,7 @@ export default function Versus() {
 
             <nav className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10">
               {navigationItems.map((item) => {
-                const isActive = item.url.includes("Versus");
+                const isActive = location.pathname === item.url;
                 return (
                   <Link key={item.title} to={item.url}>
                     <Button

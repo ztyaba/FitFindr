@@ -649,13 +649,16 @@ export default function Browse() {
               transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.2 }}
               className="absolute top-6 left-6 z-[220]"
             >
-              <div className="h-16 w-16 rounded-[2.25rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-2xl flex items-center justify-center">
+              <Link
+                to="/"
+                className="h-16 w-16 rounded-[2.25rem] bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-2xl flex items-center justify-center transition-all active:scale-95"
+              >
                 <img
                   src="/landing/assets/images/logos/Logo4.png"
                   alt="FitFindr"
                   className="h-9 w-auto object-contain"
                 />
-              </div>
+              </Link>
             </motion.div>
           )}
 
@@ -719,7 +722,7 @@ export default function Browse() {
             <div className="flex-1 flex justify-end">
               <nav className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10">
                 {navigationItems.map((item) => {
-                  const isActive = item.url.includes("Browse");
+                  const isActive = location.pathname === item.url;
                   return (
                     <Link key={item.title} to={item.url}>
                       <Button
@@ -757,9 +760,9 @@ export default function Browse() {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-6xl md:text-8xl font-black mb-8 text-white tracking-tighter"
                 >
-                  FitFindr
+                  Find
                   <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]">
-                    Browse
+                    Professionals
                   </span>
                 </motion.h1>
 
